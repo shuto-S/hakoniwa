@@ -65,6 +65,17 @@ ditto "release/はこにわ-darwin-arm64/はこにわ.app" "/Applications/はこ
   または終了した状態で `world.json` を削除
 - バックアップしたいとき: `world.json` をコピーしておくだけでよい
 
+## README のデモGIF
+
+```sh
+npx electron scripts/capture-gif.js
+```
+
+使い捨ての userData で新しい世界を起動し(自分のセーブには触れない)、
+ブロック設置と視点回転を自動操作しながら約12秒撮影して `docs/demo.gif` に書き出す。
+画面収録権限も ffmpeg も不要(capturePage + gifenc)。
+撮影シナリオはスクリプト内の `SCENARIO` を編集する。
+
 ## アイコンの変更
 
 元絵は `build/icon.svg`。変更したら:

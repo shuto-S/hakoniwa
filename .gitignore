@@ -1,0 +1,8 @@
+node_modules/
+dist/
+release/
+.DS_Store
+
+# アイコンの中間生成物(元絵は icon.svg、成果物は icon.icns)
+build/icon.iconset/
+build/icon.svg.png

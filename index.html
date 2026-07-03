@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>はこにわ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="topbar">
+      <span id="title">はこにわ</span>
+      <span id="weather" title="いまの天気">☀️</span>
+      <span id="season" title="いまの季節"></span>
+      <div id="topbar-buttons">
+        <button id="btn-rotate-left" title="視点を左に60度回す">⟲</button>
+        <button id="btn-rotate-right" title="視点を右に60度回す">⟳</button>
+        <button id="btn-auto" title="自動発展モード(世界がひとりでに育つ)">🌱</button>
+        <button id="btn-settings" title="設定を開く">⚙</button>
+        <button id="btn-quit" title="アプリを終了">✕</button>
+      </div>
+    </div>
+    <div id="viewport"></div>
+    <div id="palette"></div>
+    <div id="hint">左クリック: 置く ／ 右クリック: こわす ／ ホイール: ズーム</div>
+    <div id="settings-panel" class="hidden">
+      <h2>設定</h2>
+      <label>
+        <span>マス数 <b id="grid-size-value"></b></span>
+        <input type="range" id="grid-size" min="9" max="21" step="2" />
+      </label>
+      <label>
+        <span>高さ上限 <b id="max-height-value"></b></span>
+        <input type="range" id="max-height" min="4" max="12" step="1" />
+      </label>
+      <label>
+        <span>キャラの大きさ <b id="char-scale-value"></b></span>
+        <input type="range" id="char-scale" min="0.8" max="2.2" step="0.05" />
+      </label>
+      <label>
+        <span>キャラのはやさ <b id="char-speed-value"></b></span>
+        <input type="range" id="char-speed" min="0.5" max="2" step="0.1" />
+      </label>
+      <label>
+        <span>自動発展のはやさ <b id="auto-speed-value"></b></span>
+        <input type="range" id="auto-speed" min="0.5" max="3" step="0.1" />
+      </label>
+      <label>
+        <span>1日の長さ <b id="day-length-value"></b></span>
+        <input type="range" id="day-length" min="120" max="1200" step="60" />
+      </label>
+      <label>
+        <span>天気の変わる間隔 <b id="weather-interval-value"></b></span>
+        <input type="range" id="weather-interval" min="20" max="300" step="10" />
+      </label>
+      <div class="row">
+        <span>天気のうつりかわり</span>
+        <input type="checkbox" id="opt-weather" />
+      </div>
+      <div class="row">
+        <span>昼夜サイクル</span>
+        <input type="checkbox" id="opt-daynight" />
+      </div>
+      <div class="row">
+        <span>時のうつろい(燃え尽き・枯れ)</span>
+        <input type="checkbox" id="opt-decay" />
+      </div>
+      <div class="row">
+        <span>環境音</span>
+        <input type="checkbox" id="opt-sound" />
+      </div>
+      <label>
+        <span>音量 <b id="sound-volume-value"></b></span>
+        <input type="range" id="sound-volume" min="0" max="1" step="0.05" />
+      </label>
+      <div class="row">
+        <span>空の演出(虹・ながれぼし)</span>
+        <input type="checkbox" id="opt-sky" />
+      </div>
+      <div class="row">
+        <span>影を落とす</span>
+        <input type="checkbox" id="opt-shadows" />
+      </div>
+      <div class="row">
+        <span>常に最前面</span>
+        <input type="checkbox" id="opt-pinned" />
+      </div>
+      <div class="row">
+        <span>なかまを増やす</span>
+        <div class="spawn-buttons">
+          <button id="spawn-villager" title="ひとを追加">🧑</button>
+          <button id="spawn-sheep" title="ひつじを追加">🐑</button>
+          <button id="spawn-chicken" title="にわとりを追加">🐔</button>
+        </div>
+      </div>
+      <div class="row">
+        <button id="btn-reset" class="danger">世界をつくりなおす</button>
+      </div>
+      <p class="note">マス数・高さ上限を変えると世界がつくりなおされます</p>
+    </div>
+  </div>
+  <script src="dist/renderer.js" defer></script>
+</body>
+</html>

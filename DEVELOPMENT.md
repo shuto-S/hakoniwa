@@ -47,6 +47,8 @@ ELECTRON_ENABLE_LOGGING=1 npx electron .
 
 ## リリース(アプリの更新)手順
 
+### 自分のMacに入れる
+
 ```sh
 npm run package
 ditto "release/はこにわ-darwin-arm64/はこにわ.app" "/Applications/はこにわ.app"
@@ -55,6 +57,22 @@ ditto "release/はこにわ-darwin-arm64/はこにわ.app" "/Applications/はこ
 - 起動中のアプリは先に終了しておく(✕ボタン or `pkill -f はこにわ.app`)
 - 署名なしのローカルビルドなので、自分の Mac で作って自分で使うぶんには
   Gatekeeper の警告は出ない(配布する場合は署名・公証が別途必要)
+
+### GitHub Releases に公開する
+
+タグを push すると `.github/workflows/release.yml` が macOS ランナーでパッケージし、
+zip を Releases に自動添付する:
+
+```sh
+git tag v0.2.0
+git push --tags
+```
+
+ダウンロードした人は署名なしのため初回のみ右クリック→「開く」が必要。
+
+### CI
+
+push / PR ごとに `.github/workflows/ci.yml` が `npm run build` の通過を確認する。
 
 ## セーブデータ
 

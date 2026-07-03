@@ -17,6 +17,7 @@ export class CritterSystem {
     this.weather = weather;
     this.daynight = daynight;
     this.settings = settings;
+    this.onEvent = null;
     this.group = new THREE.Group();
     scene.add(this.group);
     this.time = 0;
@@ -38,6 +39,54 @@ export class CritterSystem {
     this.buildFallingLeaves();
     this.buildDuck();
     this.buildShootingStar();
+    this.buildWhale();
+    this.showerT = 0; // 流星群の残り時間
+  }
+
+  // ---- そらクジラ(超低確率。空をゆっくり泳いでいく) ----
+  buildWhale() {
+    this.whale = new THREE.Group();
+    const body = basicMesh(new THREE.SphereGeometry(0.5, 10, 8), 0x7f96bd);
+    body.scale.set(1.7, 0.85, 0.9);
+    this.whale.add(body);
+    const belly = basicMesh(new THREE.SphereGeometry(0.42, 10, 8), 0xc2cfe2);
+    belly.scale.set(1.6, 0.7, 0.8);
+    belly.position.y = -0.16;
+    this.whale.add(belly);
+    const tail = basicMesh(new THREE.SphereGeometry(0.22, 6, 5), 0x7f96bd);
+    tail.scale.set(1.1, 0.18, 0.9);
+    tail.position.set(-0.95, 0.12, 0);
+    this.whale.add(tail);
+    for (const side of [-1, 1]) {
+      const fin = basicMesh(new THREE.SphereGeometry(0.16, 6, 5), 0x7f96bd);
+      fin.scale.set(1, 0.2, 0.6);
+      fin.position.set(0.15, -0.2, side * 0.42);
+      this.whale.add(fin);
+    }
+    this.whale.visible = false;
+    this.group.add(this.whale);
+    this.whaleFlight = null;
+  }
+
+  updateWhale(dt) {
+    if (!this.whaleFlight) {
+      const calm = this.weather.state === 'sunny' || this.weather.state === 'cloudy';
+      if (!this.settings.skyShows || !calm) return;
+      if (Math.random() >= dt / 9000) return; // だいたい2〜3時間にいちど
+      this.whaleFlight = { t: 0 };
+      this.whale.visible = true;
+      this.whale.position.set(-this.span / 2 - 2.5, this.skyY + 2.2, -this.span * 0.15);
+      if (this.onEvent) this.onEvent('🐋 そらクジラが ゆっくりと およいでいく…');
+      return;
+    }
+    this.whaleFlight.t += dt / 30; // 30秒かけて横切る
+    const t = this.whaleFlight.t;
+    this.whale.position.x = -this.span / 2 - 2.5 + t * (this.span + 5);
+    this.whale.position.y = this.skyY + 2.2 + Math.sin(this.time * 0.8) * 0.25;
+    if (t >= 1) {
+      this.whale.visible = false;
+      this.whaleFlight = null;
+    }
   }
 
   // ---- ながれぼし(晴れた夜、すっと流れる) ----
@@ -64,13 +113,20 @@ export class CritterSystem {
   }
 
   updateShootingStar(dt) {
+    // 流星群(超低確率): しばらく星が続けて流れる
+    if (this.showerT > 0) this.showerT -= dt;
+    const active =
+      this.settings.skyShows && this.daynight.isNight && this.weather.state === 'sunny';
+    if (active && this.showerT <= 0 && Math.random() < dt / 2400) {
+      this.showerT = 25;
+      if (this.onEvent) this.onEvent('🌠 りゅうせいぐん!');
+    }
+
     if (!this.starFlight) {
-      const active =
-        this.settings.skyShows && this.daynight.isNight && this.weather.state === 'sunny';
       if (!active) return;
       this.starTimer -= dt;
       if (this.starTimer > 0) return;
-      this.starTimer = 18 + Math.random() * 40;
+      this.starTimer = this.showerT > 0 ? 0.4 + Math.random() * 0.8 : 18 + Math.random() * 40;
       this.starFlight = { life: 0.8 };
       this.star.position.set(
         (Math.random() - 0.2) * this.span,
@@ -217,6 +273,10 @@ export class CritterSystem {
       const [col, row] = ponds[Math.floor(Math.random() * ponds.length)];
       const p = this.world.positionOf(col, row);
       this.fishJump = { x: p.x, z: p.z, surfaceY: this.world.topSurfaceY(col, row), t: 0 };
+      // 低確率で金色のさかな
+      const golden = Math.random() < 0.05;
+      this.fish.material.color.setHex(golden ? 0xf2c33d : 0xe89a4a);
+      if (golden && this.onEvent) this.onEvent('✨ きんいろの さかなが はねた!');
       this.fish.visible = true;
       return;
     }
@@ -429,5 +489,6 @@ export class CritterSystem {
     this.updateFallingLeaves(dt);
     this.updateDuck(dt);
     this.updateShootingStar(dt);
+    this.updateWhale(dt);
   }
 }

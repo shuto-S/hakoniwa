@@ -155,7 +155,32 @@ export class SceneView {
         depthWrite: false,
       }),
       smokeMats: [], // 煙は個別に透明度を動かすためキャッシュして使い回す
+      // 作物(はたけの上のこむぎ)
+      cropGeos: [
+        new THREE.CylinderGeometry(0.012, 0.016, 0.1, 4), // 芽
+        new THREE.CylinderGeometry(0.014, 0.018, 0.22, 4), // 育ちざかり
+        new THREE.CylinderGeometry(0.016, 0.02, 0.26, 4), // 実り
+      ],
+      cropMats: [standard(0x76c24e), standard(0x5aa348), standard(0xd9b64a)],
     };
+  }
+
+  makeCrop(x, y, z, stage) {
+    const d = this.decor;
+    const group = new THREE.Group();
+    const offsets = [
+      [0, 0], [0.13, 0.08], [-0.12, 0.1], [0.08, -0.13], [-0.09, -0.11],
+    ];
+    const count = stage === 0 ? 3 : 5;
+    for (let i = 0; i < count; i++) {
+      const stalk = new THREE.Mesh(d.cropGeos[stage], d.cropMats[stage]);
+      const [ox, oz] = offsets[i];
+      stalk.position.set(ox, d.cropGeos[stage].parameters.height / 2, oz);
+      stalk.rotation.z = (i - 1) * 0.08;
+      group.add(stalk);
+    }
+    group.position.set(x, y, z);
+    return group;
   }
 
   smokeMaterial(index) {
@@ -330,6 +355,13 @@ export class SceneView {
       this.flowerGroup.add(
         this.makeFlower(x, this.world.topSurfaceY(col, row), z, colorIndex)
       );
+    }
+
+    // 作物を立て直す(花と同じグループに)
+    for (const [key, crop] of this.world.crops) {
+      const [col, row] = key.split(',').map(Number);
+      const { x, z } = this.world.positionOf(col, row);
+      this.flowerGroup.add(this.makeCrop(x, this.world.topSurfaceY(col, row), z, crop.stage));
     }
 
     // 家のあかりを立て直す(最初の3軒だけ)

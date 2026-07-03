@@ -101,13 +101,28 @@ src/renderer/
 - world.frozen 中は WaterSim を止める(main 側で gate)。isWalkable は凍結水面を歩行可にする。
 
 ### キャラクター
-- 状態は idle / walking / eating / sleeping。ひつじは足元の草を食べて土に変える。
+- 状態は idle / walking / eating / sleeping / working / fishing / dancing。
+- **個性**: 全キャラが name(NAMES から重複回避で命名)・trait(TRAITS: 速度と行動間隔の倍率)・
+  jitter(体格)を持つ。villager はさらに job(きこり/のうふ/つりびと/むらびと、
+  最少人数の職に就く)。しごとで見た目(斧・麦わら帽子・釣り竿)が変わる。
+  一覧は manager.roster() → 設定パネルの「むらの なかまたち」。
+- **しごと**: manager.updateJobs() が昼にタスクを割り当て(assignTask)、キャラが現場へ歩いて
+  working/fishing 状態で作業 → taskDone を manager が回収して効果を適用(applyTaskEffect)。
+  きこりの伐採・植樹は manager.jobQueue で1ブロックずつ反映。のうふは world.crops
+  (はたけの上の作物、stage 0..2、季節倍率で成長・冬は停止)を植えて収穫する。
 - 夜(daynight.isNight): ひとは manager.setNight() で家・たきびに割り当てられて歩いて向かい、
   着くと sleeping。動物はその場で眠る。朝に起きる。
-- 世代: にわとりの卵(manager.eggs、保存されない)→ ひよこ、こひつじ誕生、baby は
-  BABY_SCALE で小さく GROW_TIME で成長(baby/age は保存される)。
-- 旅人(traveler)は歩数制で、歩ききると done → 家に空きがあれば villager に転職(移住)、
-  なければ去る。**serialize には含めない**(通りすがりのため)。
+  **3日にいちど(day % 3 === 2)、たきびがあればおまつり**: 全員が火を囲んで dancing。
+- 世代: にわとりの卵(manager.eggs、保存されない)→ ひよこ、こひつじ誕生(低確率で
+  variant 'black' のくろいこひつじ)、baby は BABY_SCALE で小さく GROW_TIME で成長。
+- **訪問者**(VISITOR_TYPES: traveler/deer/cat)は歩数制で去る。main の updateVisitors が
+  抽選(旅人70% / しか17% / ねこ13%)。旅人だけ、家に空きがあれば villager として移住。
+  **serialize には含めない**。
+
+### レアイベント
+- critters.js: 金色のさかな(ジャンプの5%)、流星群(晴れた夜に確率 dt/2400、25秒)、
+  そらクジラ(確率 dt/9000 ≒ 数時間にいちど)。通知は critters.onEvent 経由。
+- つりびとの釣果にも3%で金色のさかな。レアの追加はこのパターン(低確率ロール+トースト)に倣う。
 
 ### 設定の追加手順
 新しい設定(DEFAULT_SETTINGS のキー)を足すときは4か所:

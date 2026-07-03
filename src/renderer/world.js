@@ -12,6 +12,7 @@ export class World {
     // 各マスはブロック種の配列。null は空中(木の葉の下など)
     this.stacks = Array.from({ length: cols * rows }, () => []);
     this.flowers = new Set(); // "col,row" — マスの上に咲く飾り
+    this.crops = new Map(); // "col,row" → { stage: 0..2, t: 経過秒 } はたけの上の作物
     this.frozen = false; // 冬は水面が凍る(保存されない・季節から導出)
     this.version = 0; // 変更検知用
   }
@@ -53,6 +54,7 @@ export class World {
     if (stack.length >= this.maxHeight) return false;
     stack.push(type);
     this.flowers.delete(`${col},${row}`);
+    this.crops.delete(`${col},${row}`);
     this.version++;
     return true;
   }
@@ -65,11 +67,30 @@ export class World {
       this.version++;
       return true;
     }
+    if (this.crops.has(key)) {
+      this.crops.delete(key);
+      this.version++;
+      return true;
+    }
     const stack = this.stackAt(col, row);
     const top = this.topIndex(col, row);
     if (top < 0) return false;
     stack[top] = null;
     this.trim(stack);
+    this.version++;
+    return true;
+  }
+
+  plantCrop(col, row) {
+    const key = `${col},${row}`;
+    if (this.topType(col, row) !== 'farm' || this.crops.has(key)) return false;
+    this.crops.set(key, { stage: 0, t: 0 });
+    this.version++;
+    return true;
+  }
+
+  removeCrop(col, row) {
+    if (!this.crops.delete(`${col},${row}`)) return false;
     this.version++;
     return true;
   }
@@ -81,7 +102,10 @@ export class World {
     while (stack.length <= y) stack.push(null);
     stack[y] = type;
     this.trim(stack);
-    if (type && this.topIndex(col, row) <= y) this.flowers.delete(`${col},${row}`);
+    if (type && this.topIndex(col, row) <= y) {
+      this.flowers.delete(`${col},${row}`);
+      this.crops.delete(`${col},${row}`);
+    }
     this.version++;
     return true;
   }
@@ -197,6 +221,7 @@ export class World {
       maxHeight: this.maxHeight,
       stacks: this.stacks.map((s) => s.map((b) => b || 0)),
       flowers: [...this.flowers],
+      crops: [...this.crops.entries()],
     };
   }
 
@@ -207,6 +232,7 @@ export class World {
       world.trim(world.stacks[i]);
     });
     for (const key of data.flowers || []) world.flowers.add(key);
+    for (const [key, crop] of data.crops || []) world.crops.set(key, crop);
     return world;
   }
 }

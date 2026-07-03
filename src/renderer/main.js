@@ -86,7 +86,8 @@ async function main() {
   autopilot.calendar = daynight;
   autopilot.onEvent = showToast;
   characters.onEvent = showToast;
-  characters.onTravelerLeft = () => showToast('🚶 たびびとは さっていった');
+  characters.calendar = daynight;
+  critters.onEvent = showToast;
 
   // 季節の変わり目: 葉と草の色、池の凍結、表示を更新する
   let lastSeasonIndex = -1;
@@ -102,14 +103,23 @@ async function main() {
   applySeason(false);
   lastSeasonIndex = daynight.seasonIndex;
 
-  // ときどき旅人がやってくる
-  let travelerTimer = 90 + Math.random() * 150;
-  function updateTraveler(dt) {
-    travelerTimer -= dt;
-    if (travelerTimer > 0) return;
-    travelerTimer = 180 + Math.random() * 240;
-    if (!daynight.isNight && characters.spawnTraveler()) {
-      showToast('🚶 たびびとがやってきた');
+  // ときどき訪問者がやってくる(たいてい旅人、たまにしか、まれにねこ)
+  let visitorTimer = 90 + Math.random() * 150;
+  function updateVisitors(dt) {
+    visitorTimer -= dt;
+    if (visitorTimer > 0) return;
+    visitorTimer = 180 + Math.random() * 240;
+    if (daynight.isNight) return;
+    const roll = Math.random();
+    const type = roll < 0.7 ? 'traveler' : roll < 0.87 ? 'deer' : 'cat';
+    if (characters.spawnVisitor(type)) {
+      showToast(
+        {
+          traveler: '🚶 たびびとが やってきた',
+          deer: '🦌 しかが あそびに きた',
+          cat: '🐈 ねこが ふらりと あらわれた',
+        }[type]
+      );
     }
   }
 
@@ -153,6 +163,7 @@ async function main() {
         characters.spawn(type);
         scheduleSave();
       },
+      getRoster: () => characters.roster(),
       settingChanged: (key, value) => {
         state.settings[key] = value;
         if (key === 'characterScale') characters.applyScale();
@@ -220,7 +231,18 @@ async function main() {
   const clock = new THREE.Clock();
   let renderedVersion = world.version;
 
-  function frame() {
+  // 省電力: フォーカスがないときは10fpsに落とす(ロジックはdtで進むので遅れない)
+  let windowFocused = document.hasFocus();
+  window.addEventListener('focus', () => (windowFocused = true));
+  window.addEventListener('blur', () => (windowFocused = false));
+  let lastFrameAt = 0;
+
+  function frame(now) {
+    if (state.settings.powerSave && !windowFocused && now - lastFrameAt < 95) {
+      requestAnimationFrame(frame);
+      return;
+    }
+    lastFrameAt = now;
     const dt = Math.min(0.1, clock.getDelta());
     const time = clock.elapsedTime;
 
@@ -248,7 +270,7 @@ async function main() {
       campfires: view.campfires.length,
     });
     critters.update(dt);
-    updateTraveler(dt);
+    updateVisitors(dt);
     characters.update(dt, time, daynight.isNight);
     view.update(dt);
 
@@ -265,7 +287,7 @@ async function main() {
     requestAnimationFrame(frame);
   }
 
-  frame();
+  frame(performance.now());
 }
 
 main();

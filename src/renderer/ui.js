@@ -49,6 +49,17 @@ export function setupUI(callbacks, state) {
   const panel = document.getElementById('settings-panel');
   document.getElementById('btn-settings').addEventListener('click', () => {
     panel.classList.toggle('hidden');
+    // 開くたびに「なかま」一覧を作り直す
+    if (!panel.classList.contains('hidden') && callbacks.getRoster) {
+      const roster = document.getElementById('roster');
+      roster.textContent = '';
+      for (const line of callbacks.getRoster()) {
+        const el = document.createElement('div');
+        el.textContent = line;
+        roster.appendChild(el);
+      }
+      if (roster.childElementCount === 0) roster.textContent = 'まだ だれもいない';
+    }
   });
 
   const gridSize = document.getElementById('grid-size');
@@ -106,6 +117,7 @@ export function setupUI(callbacks, state) {
   bindCheckbox('opt-sky', 'skyShows');
   bindCheckbox('opt-shadows', 'shadows');
   bindCheckbox('opt-pinned', 'pinned');
+  bindCheckbox('opt-powersave', 'powerSave');
 
   document.getElementById('spawn-villager').addEventListener('click', () => callbacks.spawn('villager'));
   document.getElementById('spawn-sheep').addEventListener('click', () => callbacks.spawn('sheep'));

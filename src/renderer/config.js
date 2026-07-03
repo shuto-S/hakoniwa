@@ -20,6 +20,7 @@ export const BLOCK_TYPES = {
   water: { name: 'みず', color: 0x4aa8e8, water: true },
   campfire: { name: 'たきび', color: 0x6b4a2f, fire: true },
   ash: { name: 'はい', color: 0x6e6a66 },
+  farm: { name: 'はたけ', color: 0x7a5a38 },
 };
 
 export const FLOWER_COLORS = [0xf27ea9, 0xf2d54e, 0xffffff, 0xb98aef];
@@ -58,6 +59,7 @@ export const DEFAULT_SETTINGS = {
   autoSpeed: 1, // 自動発展のはやさ(倍率)
   shadows: true, // デスクトップに影を落とす
   pinned: true, // 常に最前面に表示
+  powerSave: true, // 非アクティブ時はフレームレートを落とす
   sound: true, // 環境音
   volume: 0.5, // 音量(0〜1)
   skyShows: true, // 空の演出(虹・ながれぼし)

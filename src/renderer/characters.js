@@ -31,6 +31,7 @@ const LAMB_RATE = 1 / 300;
 const BLACK_LAMB_CHANCE = 0.12; // くろいこひつじ(低確率)
 const FESTIVAL_LENGTH = 55; // おまつりの長さ(秒)
 const ANIMAL_FESTIVAL_CHANCE = 0.2; // まれに動物もおまつりに参加する
+const TRAVELER_FESTIVAL_CHANCE = 0.5; // 旅人はそこそこの確率で祭りに混ざる
 
 const MOVE_DURATION = {
   villager: 0.55, sheep: 0.7, chicken: 0.45, traveler: 0.5, deer: 0.42, cat: 0.5,
@@ -443,11 +444,18 @@ export class CharacterManager {
     if (festivalNight && fires.length > 0 && villagers.length >= 2) {
       this.festivalActive = true;
       this.festivalT = FESTIVAL_LENGTH;
-      // たいていはひとだけのおまつり。まれに動物もいっしょに踊りだす
+      // たいていはひとだけのおまつり。まれに動物もいっしょに踊りだす。
+      // 通りすがりの旅人は、出くわしたらそこそこの確率で混ざる
       const animalsJoin = Math.random() < ANIMAL_FESTIVAL_CHANCE;
+      const travelerJoins = Math.random() < TRAVELER_FESTIVAL_CHANCE;
+      const joinsFestival = (c) => {
+        if (c.type === 'villager') return true;
+        if (c.type === 'traveler') return travelerJoins;
+        if (VISITOR_TYPES.has(c.type)) return false; // しか・ねこは混ざらない
+        return animalsJoin; // ひつじ・にわとり
+      };
       for (const c of this.characters) {
-        const joins = c.type === 'villager' || (animalsJoin && !VISITOR_TYPES.has(c.type));
-        c.targetSpot = joins ? fires[0] : null;
+        c.targetSpot = joinsFestival(c) ? fires[0] : null;
         c.task = null;
         if (c.state === 'working' || c.state === 'fishing') {
           c.state = 'idle';

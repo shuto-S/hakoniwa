@@ -16,14 +16,12 @@ import { setupUI, showToast, setWeatherDisplay, setSeasonDisplay } from './ui.js
 import { t, setLanguage, getLanguage } from './i18n/index.js';
 import { AiClient } from './ai/client.js';
 import {
-  mutterRequest,
-  cleanLine,
-  poemRequest,
-  taleRequest,
-  chronicleRequest,
-  namesRequest,
-  parseNameList,
-} from './ai/flavor.js';
+  generateMutter,
+  generatePoem,
+  generateTale,
+  generateChronicle,
+  refillNamePool,
+} from './ai/generate.js';
 
 async function loadSave() {
   try {
@@ -128,13 +126,13 @@ async function main() {
     if (flavorBusy || !ai.available()) return;
     // 旅人の小話は半分くらいの確率に絞る(毎回は出さない)
     if (kind === 'travelerleave' && Math.random() < 0.5) return;
-    const lang = getLanguage();
-    const season = daynight.season.key;
-    const req =
-      kind === 'travelerleave' ? taleRequest({ season, lang }) : poemRequest(kind, { season, lang });
+    const ctx = { season: daynight.season.key, lang: getLanguage() };
     flavorBusy = true;
     try {
-      const line = cleanLine(await ai.generate(req), 40);
+      const line =
+        kind === 'travelerleave'
+          ? await generateTale(ai, ctx)
+          : await generatePoem(ai, kind, ctx);
       if (line) showToast(line);
     } finally {
       flavorBusy = false;
@@ -156,8 +154,7 @@ async function main() {
     if (!low) return;
     nameRefilling = true;
     try {
-      const text = await ai.generate(namesRequest(low, { season: daynight.season.key, lang: getLanguage() }));
-      ai.fill(`name:${low}`, parseNameList(text));
+      await refillNamePool(ai, low, { season: daynight.season.key, lang: getLanguage() });
     } finally {
       nameRefilling = false;
     }
@@ -193,18 +190,15 @@ async function main() {
     if (!villager) return;
     muttering = true;
     try {
-      const text = await ai.generate(
-        mutterRequest({
-          season: daynight.season.key,
-          weather: weather.state,
-          timeOfDay: daynight.isNight ? 'night' : 'day',
-          name: villager.name,
-          job: villager.job || undefined,
-          trait: villager.trait.key,
-          lang: getLanguage(),
-        })
-      );
-      const line = cleanLine(text);
+      const line = await generateMutter(ai, {
+        season: daynight.season.key,
+        weather: weather.state,
+        timeOfDay: daynight.isNight ? 'night' : 'day',
+        name: villager.name,
+        job: villager.job || undefined,
+        trait: villager.trait.key,
+        lang: getLanguage(),
+      });
       // まだその村人が手すきで存在していれば喋らせる
       if (line && characters.characters.includes(villager) && villager.state === 'idle') {
         characters.speak(villager, line);
@@ -219,12 +213,11 @@ async function main() {
   async function morningChronicle() {
     const events = dayEvents.splice(0, dayEvents.length); // 前日ぶんを取り出してクリア
     if (!ai.available() || events.length === 0) return;
-    const line = cleanLine(
-      await ai.generate(
-        chronicleRequest(events, { day: daynight.day, season: daynight.season.key, lang: getLanguage() })
-      ),
-      70
-    );
+    const line = await generateChronicle(ai, events, {
+      day: daynight.day,
+      season: daynight.season.key,
+      lang: getLanguage(),
+    });
     if (line) showToast(line);
   }
 

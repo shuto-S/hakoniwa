@@ -15,7 +15,9 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon)-lightgrey)
 ![Made with](https://img.shields.io/badge/Electron%20%2B%20Three.js-2b3a55)
 
-<img src="docs/demo.gif" width="440" alt="はこにわのデモ: 六角ブロックの島にブロックを置き、視点を回転する様子" />
+<img src="docs/demo.gif" width="440" alt="はこにわのデモ: 水が流れ、雨がふって晴れ、たきびが灯り、住民が歩きまわる様子" />
+<br />
+<sub>水を流して、たきびを灯して、雨があがるのを眺める ── あとはぜんぶ勝手に進みます</sub>
 
 </div>
 

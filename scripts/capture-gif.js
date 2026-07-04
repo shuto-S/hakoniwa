@@ -1,23 +1,64 @@
 // README 用のデモGIFを撮る開発ツール。
 //   npx electron scripts/capture-gif.js
-// 一時的な userData で新しい世界を立ち上げ(ユーザーのセーブには触れない)、
-// ブロック設置や視点回転を自動操作しながら capturePage で撮影して
+// 一時的な userData にデモ用の世界(職業つきの住民・はやい自動発展・短い天気サイクル)を
+// 仕込んで起動し、ブロック設置や視点回転を自動操作しながら capturePage で撮影して
 // docs/demo.gif に書き出す。画面収録権限も ffmpeg も不要。
 const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { pathToFileURL } = require('url');
 const { GIFEncoder, quantize, applyPalette } = require('gifenc');
 
+const ROOT = path.join(__dirname, '..');
 const FPS = 10;
-const SECONDS = 12;
+const SECONDS = 15;
 const OUT_WIDTH = 440; // GIFの横幅(サイズ抑制のため縮小)
-const WARMUP_MS = 4000; // 世界が立ち上がるまでの待ち
+const WARMUP_MS = 5000; // 世界が立ち上がるまでの待ち
 
 // ユーザーのセーブを汚さないよう、使い捨ての userData を使う
 app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'hakoniwa-demo-')));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// デモ用のセーブデータ: 見栄えする住民をそろえ、時間の流れをはやめる
+async function buildDemoSave() {
+  const { generateWorld } = await import(
+    pathToFileURL(path.join(ROOT, 'src/renderer/terrain.js'))
+  );
+  const world = generateWorld(15, 15, 8);
+  const spots = world
+    .columnsWhere((c, r) => world.isWalkable(c, r))
+    .filter(([c, r]) => c > 2 && c < 12 && r > 2 && r < 12); // 見える中央あたり
+  for (let i = spots.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [spots[i], spots[j]] = [spots[j], spots[i]];
+  }
+  const cast = [
+    { type: 'villager', name: 'そら', job: 'きこり', trait: 'せっかち' },
+    { type: 'villager', name: 'ゆず', job: 'のうふ', trait: 'げんき' },
+    { type: 'villager', name: 'うみ', job: 'つりびと', trait: 'まいぺーす' },
+    { type: 'sheep', name: 'モコ' },
+    { type: 'sheep', name: 'フワ', baby: true },
+    { type: 'chicken', name: 'ピヨ' },
+    { type: 'chicken', name: 'マメ', baby: true },
+  ];
+  const characters = cast.map((c, i) => ({ ...c, col: spots[i][0], row: spots[i][1] }));
+  return JSON.stringify({
+    world: world.serialize(),
+    characters,
+    auto: true, // 自動発展オン
+    settings: {
+      autoSpeed: 3,
+      characterSpeed: 1.2,
+      dayLength: 120,
+      weatherInterval: 9, // 撮影中に天気が変わるように
+      sound: false,
+    },
+    dayTime: 0.2, // あかるい朝
+    day: 0,
+  });
+}
 
 // キャンバスの相対座標に pointer イベントを送ってブロックを置く
 const placeAt = (fx, fy) => `(() => {
@@ -32,15 +73,20 @@ const selectSwatch = (i) => `document.querySelectorAll('.swatch')[${i}].click()`
 const rotate = () => `document.getElementById('btn-rotate-right').click()`;
 
 // 撮影中の自動操作(秒 → スクリプト)
+// swatch: 0草 1土 2石 3砂 4木 5葉 6レンガ 7雪 8水 9たきび 10灰 11畑
 const SCENARIO = [
-  [0.8, selectSwatch(6)], // レンガを選ぶ
-  [1.2, placeAt(0.47, 0.5)],
-  [2.0, placeAt(0.53, 0.46)],
-  [2.8, placeAt(0.5, 0.56)],
-  [3.6, selectSwatch(9)], // たきびを選ぶ
-  [4.2, placeAt(0.58, 0.6)],
-  [6.0, rotate()],
-  [9.0, rotate()],
+  [0.6, selectSwatch(2)], // いしで小さな山をつくって…
+  [1.0, placeAt(0.4, 0.45)],
+  [1.7, placeAt(0.4, 0.45)],
+  [2.6, selectSwatch(8)], // てっぺんから水を流す
+  [3.0, placeAt(0.4, 0.45)],
+  [4.4, selectSwatch(6)], // レンガの塔
+  [4.8, placeAt(0.56, 0.5)],
+  [5.5, placeAt(0.56, 0.5)],
+  [6.4, selectSwatch(9)], // たきびを灯す
+  [6.9, placeAt(0.62, 0.6)],
+  [8.2, rotate()],
+  [11.5, rotate()],
 ];
 
 // 透明ウィンドウの撮影結果を、空色のグラデーションに合成する
@@ -67,11 +113,14 @@ function compositeFrame(bitmap, width, height) {
 }
 
 app.whenReady().then(async () => {
-  // preload が呼ぶ IPC のスタブ(撮影中は保存しない)
-  ipcMain.handle('world:load', () => null);
+  const demoSave = await buildDemoSave();
+  ipcMain.handle('world:load', () => demoSave);
   ipcMain.handle('world:save', () => true);
+  ipcMain.handle('shot:save', () => null);
+  ipcMain.handle('shot:share', () => false);
   ipcMain.on('app:quit', () => app.quit());
   ipcMain.on('window:pin', () => {});
+  ipcMain.on('app:autolaunch', () => {});
 
   const win = new BrowserWindow({
     width: 480,
@@ -80,12 +129,12 @@ app.whenReady().then(async () => {
     frame: false,
     hasShadow: false,
     webPreferences: {
-      preload: path.join(__dirname, '..', 'preload.js'),
+      preload: path.join(ROOT, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
-  await win.loadFile(path.join(__dirname, '..', 'index.html'));
+  await win.loadFile(path.join(ROOT, 'index.html'));
   await sleep(WARMUP_MS);
 
   const frames = [];
@@ -104,6 +153,10 @@ app.whenReady().then(async () => {
     let image = await win.webContents.capturePage();
     if (image.getSize().width > OUT_WIDTH) image = image.resize({ width: OUT_WIDTH });
     frames.push({ bitmap: image.toBitmap(), ...image.getSize() });
+    // 撮影の途中経過を確認できるよう、数枚だけ静止画も残す
+    if (i === 45 || i === 80 || i === 130) {
+      fs.writeFileSync(path.join(os.tmpdir(), `hakoniwa-frame-${i}.png`), image.toPNG());
+    }
     const nextAt = start + ((i + 1) * 1000) / FPS;
     await sleep(Math.max(0, nextAt - Date.now()));
   }
@@ -118,7 +171,7 @@ app.whenReady().then(async () => {
   }
   gif.finish();
 
-  const out = path.join(__dirname, '..', 'docs', 'demo.gif');
+  const out = path.join(ROOT, 'docs', 'demo.gif');
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, Buffer.from(gif.bytes()));
   console.log(`wrote ${out} (${(fs.statSync(out).size / 1024 / 1024).toFixed(2)} MB)`);

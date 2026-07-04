@@ -15,7 +15,9 @@ through seasons — while you work. A "watch-and-relax" desktop widget.
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
 ![Made with](https://img.shields.io/badge/Electron%20%2B%20Three.js-2b3a55)
 
-<img src="docs/demo.gif" width="440" alt="Hakoniwa demo: placing hex blocks on a floating island and rotating the view" />
+<img src="docs/demo.gif" width="440" alt="Hakoniwa demo: water flowing, rain passing, a campfire burning, and villagers wandering" />
+<br />
+<sub>Pour some water, light a campfire, watch the rain pass — everything else just happens</sub>
 
 </div>
 

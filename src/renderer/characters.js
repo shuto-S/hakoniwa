@@ -30,6 +30,7 @@ const EGG_RATE = 1 / 240; // にわとり1羽あたり毎秒の産卵確率
 const LAMB_RATE = 1 / 300;
 const BLACK_LAMB_CHANCE = 0.12; // くろいこひつじ(低確率)
 const FESTIVAL_LENGTH = 55; // おまつりの長さ(秒)
+const ANIMAL_FESTIVAL_CHANCE = 0.2; // まれに動物もおまつりに参加する
 
 const MOVE_DURATION = {
   villager: 0.55, sheep: 0.7, chicken: 0.45, traveler: 0.5, deer: 0.42, cat: 0.5,
@@ -442,9 +443,11 @@ export class CharacterManager {
     if (festivalNight && fires.length > 0 && villagers.length >= 2) {
       this.festivalActive = true;
       this.festivalT = FESTIVAL_LENGTH;
+      // たいていはひとだけのおまつり。まれに動物もいっしょに踊りだす
+      const animalsJoin = Math.random() < ANIMAL_FESTIVAL_CHANCE;
       for (const c of this.characters) {
-        // おまつりに参加するのはひとだけ。動物はふだんどおりその場で眠る
-        c.targetSpot = c.type === 'villager' ? fires[0] : null;
+        const joins = c.type === 'villager' || (animalsJoin && !VISITOR_TYPES.has(c.type));
+        c.targetSpot = joins ? fires[0] : null;
         c.task = null;
         if (c.state === 'working' || c.state === 'fishing') {
           c.state = 'idle';
@@ -452,7 +455,13 @@ export class CharacterManager {
           c.mesh.rotation.x = 0;
         }
       }
-      if (this.onEvent) this.onEvent('🎉 たきびのまわりで おまつりが はじまった!');
+      if (this.onEvent) {
+        this.onEvent(
+          animalsJoin
+            ? '🎉 たきびのまわりで どうぶつもいっしょに おまつり!'
+            : '🎉 たきびのまわりで おまつりが はじまった!'
+        );
+      }
       return;
     }
     const spots = [...this.world.hutCenters(), ...fires];

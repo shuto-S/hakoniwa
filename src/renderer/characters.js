@@ -57,6 +57,7 @@ const GREET_EMOJI = {
 };
 const GREET_COOLDOWN = 90; // 同じ2人が続けてあいさつしない(秒)
 const BUBBLE_LIFE = 1.9;
+const SPEECH_LIFE = 4.2; // AIのつぶやきは長めに出す
 
 const bubbleTextures = new Map();
 function bubbleMaterial(emoji) {
@@ -75,6 +76,44 @@ function bubbleMaterial(emoji) {
     transparent: true,
     depthWrite: false,
   });
+}
+
+// AIのつぶやき用: テキストを角丸の吹き出しに描いたスプライト(都度生成・都度破棄)
+function speechSprite(text) {
+  const pad = 14;
+  const fontPx = 30;
+  const measure = document.createElement('canvas').getContext('2d');
+  measure.font = `${fontPx}px sans-serif`;
+  const w = Math.ceil(measure.measureText(text).width) + pad * 2;
+  const h = fontPx + pad * 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(28,30,38,0.9)';
+  const r = 14;
+  ctx.beginPath();
+  ctx.moveTo(r, 0);
+  ctx.arcTo(w, 0, w, h, r);
+  ctx.arcTo(w, h, 0, h, r);
+  ctx.arcTo(0, h, 0, 0, r);
+  ctx.arcTo(0, 0, w, 0, r);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `${fontPx}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h / 2 + 1);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const sprite = new THREE.Sprite(
+    new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false })
+  );
+  // アスペクト比を保ってワールド単位に。高さ 0.28 くらい
+  const worldH = 0.28;
+  sprite.scale.set((w / h) * worldH, worldH, 1);
+  sprite.userData.ownTexture = texture; // 破棄用
+  return sprite;
 }
 
 class Character {
@@ -334,10 +373,7 @@ export class CharacterManager {
       disposeMesh(c.mesh);
     }
     for (const egg of this.eggs) this.scene.remove(egg.mesh); // 卵は共有ジオメトリなので破棄しない
-    for (const bubble of this.bubbles) {
-      this.scene.remove(bubble.sprite);
-      bubble.sprite.material.dispose();
-    }
+    for (const bubble of [...this.bubbles]) this.removeBubble(bubble);
     this.characters = [];
     this.eggs = [];
     this.bubbles = [];
@@ -509,11 +545,7 @@ export class CharacterManager {
         this.scene.remove(c.mesh);
         disposeMesh(c.mesh);
         // 去るキャラの頭上に出ていた吹き出しも片づける(宙に残さない)
-        for (const bubble of this.bubbles.filter((b) => b.char === c)) {
-          this.scene.remove(bubble.sprite);
-          bubble.sprite.material.dispose();
-        }
-        this.bubbles = this.bubbles.filter((b) => b.char !== c);
+        for (const bubble of this.bubbles.filter((b) => b.char === c)) this.removeBubble(bubble);
         if (c.type === 'traveler') {
           const villagers = this.characters.filter((v) => v.type === 'villager').length;
           if (villagers < capacity && Math.random() < 0.6) {
@@ -614,22 +646,21 @@ export class CharacterManager {
   // ---- あいさつ ----
   // 近くにいるキャラ同士が、たまに向き合ってあいさつする
   updateGreetings(dt, time, isNight) {
-    // 吹き出しの追従とフェード
+    // 吹き出しの追従とフェード(絵文字・テキスト共通)
     for (const bubble of [...this.bubbles]) {
       bubble.t += dt;
-      if (bubble.t >= BUBBLE_LIFE) {
-        this.scene.remove(bubble.sprite);
-        bubble.sprite.material.dispose(); // テクスチャは共有キャッシュなので残す
-        this.bubbles = this.bubbles.filter((b) => b !== bubble);
+      const life = bubble.life || BUBBLE_LIFE;
+      if (bubble.t >= life) {
+        this.removeBubble(bubble);
         continue;
       }
       const char = bubble.char;
       const pop = Math.min(1, bubble.t * 6);
-      bubble.sprite.scale.setScalar(0.34 * pop);
-      bubble.sprite.material.opacity = bubble.t > 1.4 ? (BUBBLE_LIFE - bubble.t) / 0.5 : 1;
+      bubble.sprite.scale.set(bubble.base.x * pop, bubble.base.y * pop, 1);
+      bubble.sprite.material.opacity = bubble.t > life - 0.5 ? (life - bubble.t) / 0.5 : 1;
       bubble.sprite.position.set(
         char.mesh.position.x,
-        char.mesh.position.y + 0.62 * char.mesh.scale.y + 0.15,
+        char.mesh.position.y + 0.62 * char.mesh.scale.y + 0.2,
         char.mesh.position.z
       );
     }
@@ -672,7 +703,37 @@ export class CharacterManager {
     const sprite = new THREE.Sprite(bubbleMaterial(emoji));
     sprite.scale.setScalar(0.01);
     this.scene.add(sprite);
-    this.bubbles.push({ sprite, char, t: 0 });
+    this.bubbles.push({ sprite, char, t: 0, base: { x: 0.34, y: 0.34 } });
+  }
+
+  // AIのつぶやきをテキスト吹き出しで出す(char は randomIdleVillager 等で得る)
+  speak(char, text) {
+    if (!char || !text) return;
+    const sprite = speechSprite(text);
+    const base = { x: sprite.scale.x, y: sprite.scale.y };
+    sprite.scale.set(0.01, 0.01, 1);
+    this.scene.add(sprite);
+    this.bubbles.push({
+      sprite,
+      char,
+      t: 0,
+      base,
+      life: SPEECH_LIFE,
+      ownTexture: sprite.userData.ownTexture,
+    });
+  }
+
+  // つぶやかせる相手: いま手すきの村人を1人(いなければ null)
+  randomIdleVillager() {
+    const idle = this.characters.filter((c) => c.type === 'villager' && c.state === 'idle');
+    return idle.length ? idle[Math.floor(Math.random() * idle.length)] : null;
+  }
+
+  removeBubble(bubble) {
+    this.scene.remove(bubble.sprite);
+    bubble.sprite.material.dispose();
+    if (bubble.ownTexture) bubble.ownTexture.dispose(); // テキストは専用テクスチャなので破棄
+    this.bubbles = this.bubbles.filter((b) => b !== bubble);
   }
 
   // ---- 昼のしごと ----

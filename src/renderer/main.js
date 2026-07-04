@@ -13,8 +13,9 @@ import { AmbientAudio } from './audio.js';
 import { CritterSystem } from './critters.js';
 import { SeasonalEvents } from './seasonal.js';
 import { setupUI, showToast, setWeatherDisplay, setSeasonDisplay } from './ui.js';
-import { t, setLanguage } from './i18n/index.js';
+import { t, setLanguage, getLanguage } from './i18n/index.js';
 import { AiClient } from './ai/client.js';
+import { mutterRequest, cleanLine } from './ai/flavor.js';
 
 async function loadSave() {
   try {
@@ -71,7 +72,6 @@ async function main() {
   // AI クライアント(後続のフレーバー機能が使う。無効/失敗時は null を返す)。
   // 実生成はメインプロセス(window.tsuminiwa.ai)へ委譲する
   const ai = new AiClient(state.settings, window.tsuminiwa.ai);
-  void ai; // #1 では配線まで。実フレーバーは #2 で ai.generate/take を使う
 
   const viewport = document.getElementById('viewport');
   const view = new SceneView(viewport, world);
@@ -125,6 +125,40 @@ async function main() {
   let lastDay = daynight.day;
   applySeason(false);
   lastSeasonIndex = daynight.seasonIndex;
+
+  // 住民のAIつぶやき: 有効時だけ、たまに手すきの村人が文脈に沿った一言を喋る。
+  // 無効・キー無し・失敗・レート上限時は ai.generate が null を返し、何も出ない(従来どおり)
+  let mutterTimer = 20 + Math.random() * 20;
+  let muttering = false;
+  async function updateMutters(dt) {
+    if (muttering || !ai.available()) return;
+    mutterTimer -= dt;
+    if (mutterTimer > 0) return;
+    mutterTimer = 25 + Math.random() * 35;
+    const villager = characters.randomIdleVillager();
+    if (!villager) return;
+    muttering = true;
+    try {
+      const text = await ai.generate(
+        mutterRequest({
+          season: daynight.season.key,
+          weather: weather.state,
+          timeOfDay: daynight.isNight ? 'night' : 'day',
+          name: villager.name,
+          job: villager.job || undefined,
+          trait: villager.trait.key,
+          lang: getLanguage(),
+        })
+      );
+      const line = cleanLine(text);
+      // まだその村人が手すきで存在していれば喋らせる
+      if (line && characters.characters.includes(villager) && villager.state === 'idle') {
+        characters.speak(villager, line);
+      }
+    } finally {
+      muttering = false;
+    }
+  }
 
   // ときどき訪問者がやってくる(たいてい旅人、たまにしか、まれにねこ)
   let visitorTimer = 90 + Math.random() * 150;
@@ -318,6 +352,7 @@ async function main() {
     critters.update(dt);
     seasonal.update(dt);
     updateVisitors(dt);
+    updateMutters(dt);
     characters.update(dt, time, daynight.isNight);
     view.update(dt);
 

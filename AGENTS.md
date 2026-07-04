@@ -15,11 +15,16 @@ npm install        # 依存インストール(allow-scripts に注意 → DEVELO
 npm run build      # esbuild で renderer をバンドル(dist/renderer.js)
 npm run watch      # バンドルの watch モード
 npm start          # build + electron 起動
+npm test           # node:test によるユニットテスト(test/*.test.mjs)
 npm run package    # macOS アプリ化(release/はこにわ-darwin-arm64/はこにわ.app)
 ```
 
-テストフレームワークやリンターは未導入。動作確認は実際に起動して行う
-(`ELECTRON_ENABLE_LOGGING=1 npx electron .` でレンダラーのコンソールも標準出力に出る)。
+テストは純ロジック(world / terrain / water)を対象にしている。
+`src/renderer/package.json` の `{"type":"module"}` により Node が renderer の
+ESM をそのまま import できる(three に依存しないモジュールだけテスト可能)。
+**world.js や terrain.js のロジックを変えたら `npm test`、描画や振る舞いを変えたら
+実際に起動して確認する**(`ELECTRON_ENABLE_LOGGING=1 npx electron .` で
+レンダラーのコンソールも標準出力に出る)。
 時間系の機能は設定の「1日の長さ」「天気の変わる間隔」を最短にすると早く確認できる。
 
 ## アーキテクチャ
@@ -32,8 +37,11 @@ index.html / style.css     UI の DOM。トップバー(-webkit-app-region: drag
 src/renderer/
   main.js                  エントリポイント。セーブ読込→各モジュール初期化→入力→rAF ループ
   config.js                寸法定数・BLOCK_TYPES(ブロック定義)・キャラ種別
-  world.js                 World クラス。六角グリッドのデータモデル(描画と完全分離)
-  terrain.js               初期地形生成(バリューノイズ)、木のプラン(treePlan)
+  world.js                 World クラス。六角グリッドのデータモデル(描画と完全分離)。
+                           マス走査は columnsWhere(fn) / topsOfType(type) を使う(手書きループ禁止)
+  terrain.js               初期地形生成(バリューノイズ)、木のプラン
+                           (treePlan / treeRemovalPlan / isTreeColumn — 枯れと伐採で共用)
+  characterMeshes.js       キャラの見た目(MAKERS)。job/variant で衣装・持ち物が変わる
   scene3d.js               SceneView クラス。Three.js の描画すべて(カメラ・ライト・InstancedMesh・ピッキング)
   characters.js            Character / CharacterManager。自律移動するキャラ(villager/sheep/chicken)
   autopilot.js             自動発展ルール(草の伝播・花・木・雪・小屋の建設キュー、天気・季節連動)
@@ -86,6 +94,11 @@ src/renderer/
 - ウィンドウは透明。地面には ShadowMaterial の板があり、デスクトップに影だけ落ちる。
 - 葉と草の色は `view.seasonColors`、水面の凍結見た目は `world.frozen` を rebuild が参照。
   家のあかりは `view.nightGlow`(main が毎フレーム 0/1 を設定)で点灯する。
+- rebuild の最後で InstancedMesh の `boundingSphere = null` にしている。
+  **これを消すと、高く積んだブロックがレイキャストに当たらなくなる**(境界球が古いままのため)。
+- キャラのメッシュはパーツごとに固有ジオメトリ/マテリアルを持つので、シーンから
+  外すとき必ず characters.js の disposeMesh() を通す(常駐アプリのGPUリーク防止)。
+  卵・花・たきび・作物は共有アセットなので破棄しない。
 
 ### ライティングの流れ
 - weather.js はライトを直接触らず `weather.current`(天気ぶんの明るさ)を持つだけ。

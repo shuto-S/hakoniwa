@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { HEX_RADIUS } from './config.js';
+import { BLOCK_HEIGHT, HEX_RADIUS } from './config.js';
 
 const BUTTERFLY_COLORS = [0xf2a0c0, 0xf2d54e, 0x9ad4f2, 0xd0a0f2];
 
@@ -29,7 +29,7 @@ export class CritterSystem {
     const spanX = world.cols * HEX_RADIUS * Math.sqrt(3);
     const spanZ = world.rows * HEX_RADIUS * 1.5;
     this.span = Math.max(spanX, spanZ);
-    this.skyY = world.maxHeight * 0.5 + 1.6;
+    this.skyY = world.maxHeight * BLOCK_HEIGHT + 1.6;
 
     this.group.clear();
     this.buildBirds();
@@ -236,9 +236,7 @@ export class CritterSystem {
     if (flowers.length > 0) {
       [col, row] = flowers[Math.floor(Math.random() * flowers.length)].split(',').map(Number);
     } else {
-      const grass = [...this.world.columns()].filter(
-        ([c, r]) => this.world.topType(c, r) === 'grass'
-      );
+      const grass = this.world.topsOfType('grass');
       if (grass.length === 0) return null;
       [col, row] = grass[Math.floor(Math.random() * grass.length)];
     }
@@ -265,9 +263,7 @@ export class CritterSystem {
     if (!this.fishJump) {
       this.fishTimer -= dt;
       if (this.fishTimer > 0) return;
-      const ponds = [...this.world.columns()].filter(
-        ([c, r]) => this.world.topType(c, r) === 'water'
-      );
+      const ponds = this.world.topsOfType('water');
       this.fishTimer = 6 + Math.random() * 10;
       if (ponds.length === 0) return;
       const [col, row] = ponds[Math.floor(Math.random() * ponds.length)];
@@ -299,7 +295,7 @@ export class CritterSystem {
   buildFireflies() {
     const count = 26;
     this.fireflyData = [];
-    const land = [...this.world.columns()].filter(([c, r]) => this.world.isWalkable(c, r));
+    const land = this.world.columnsWhere((c, r) => this.world.isWalkable(c, r));
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const [col, row] = land[Math.floor(Math.random() * Math.max(1, land.length))] || [0, 0];
@@ -421,12 +417,17 @@ export class CritterSystem {
   }
 
   waterColumns() {
-    return [...this.world.columns()].filter(([c, r]) => this.world.topType(c, r) === 'water');
+    return this.world.topsOfType('water');
   }
 
   updateDuck(dt) {
     const ponds = this.waterColumns();
     const active = ponds.length >= 3 && !this.world.frozen;
+    // 足元が埋め立てられたら、いったん引き上げて浮かべ直す
+    if (this.duck.visible && this.world.topType(this.duckCol, this.duckRow) !== 'water') {
+      this.duck.visible = false;
+      this.duckMove = null;
+    }
     if (!active) {
       this.duck.visible = false;
       this.duckMove = null;

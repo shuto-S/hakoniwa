@@ -1,4 +1,4 @@
-import { treePlan, shuffle } from './terrain.js';
+import { treePlan, shuffle, isTreeColumn } from './terrain.js';
 
 const PLAN_INTERVAL = 2.2; // 次のできごとを考えるまでの間隔
 const BUILD_INTERVAL = 0.28; // 建設中の1ブロックごとの間隔
@@ -77,11 +77,9 @@ export class Autopilot {
 
   // 雪の日: どこかのマスに雪が積もる(積もりすぎない程度に)
   snowfall() {
-    const snowy = [...this.world.columns()].filter(
-      ([c, r]) => this.world.topType(c, r) === 'snow'
-    ).length;
+    const snowy = this.world.topsOfType('snow').length;
     if (snowy > this.world.cols * this.world.rows * 0.15) return;
-    const spots = [...this.world.columns()].filter(([c, r]) => {
+    const spots = this.world.columnsWhere((c, r) => {
       const top = this.world.topType(c, r);
       return (
         top && top !== 'snow' && top !== 'water' && this.world.heightAt(c, r) < this.world.maxHeight
@@ -94,22 +92,18 @@ export class Autopilot {
 
   // 晴れの日: 積もった雪がとける
   meltSnow() {
-    const spots = [...this.world.columns()].filter(
-      ([c, r]) => this.world.topType(c, r) === 'snow'
-    );
+    const spots = this.world.topsOfType('snow');
     if (spots.length === 0) return;
     const [c, r] = spots[Math.floor(Math.random() * spots.length)];
     this.world.removeTop(c, r);
   }
 
   grassTops() {
-    return [...this.world.columns()].filter(
-      ([c, r]) => this.world.topType(c, r) === 'grass'
-    );
+    return this.world.topsOfType('grass');
   }
 
   spreadGrass() {
-    const candidates = [...this.world.columns()].filter(([c, r]) => {
+    const candidates = this.world.columnsWhere((c, r) => {
       if (this.world.topType(c, r) !== 'dirt') return false;
       return this.world
         .neighbors(c, r)
@@ -131,9 +125,8 @@ export class Autopilot {
   growTree() {
     // 冬は木が育たない
     if (this.calendar && this.calendar.season.key === 'winter') return;
-    const treeCount = [...this.world.columns()].filter(([c, r]) =>
-      this.world.stackAt(c, r).includes('wood')
-    ).length;
+    // 小屋の屋根の木材を数えないよう「幹+葉」で判定する
+    const treeCount = this.world.columnsWhere((c, r) => isTreeColumn(this.world, c, r)).length;
     if (treeCount >= Math.floor((this.world.cols * this.world.rows) / 18)) return;
 
     const spots = shuffle(
@@ -152,8 +145,8 @@ export class Autopilot {
   }
 
   capSnow() {
-    const peaks = [...this.world.columns()].filter(
-      ([c, r]) =>
+    const peaks = this.world.columnsWhere(
+      (c, r) =>
         this.world.topType(c, r) === 'stone' &&
         this.world.heightAt(c, r) >= Math.max(4, this.world.maxHeight - 3) &&
         this.world.heightAt(c, r) < this.world.maxHeight
@@ -168,7 +161,7 @@ export class Autopilot {
     const hasVillager = this.characters.characters.some((c) => c.type === 'villager');
     if (!hasVillager) return;
 
-    const brickColumns = [...this.world.columns()].filter(([c, r]) =>
+    const brickColumns = this.world.columnsWhere((c, r) =>
       this.world.stackAt(c, r).includes('brick')
     ).length;
     if (brickColumns >= 15) return; // 小屋はだいたい3軒まで

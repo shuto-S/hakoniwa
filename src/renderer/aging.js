@@ -1,4 +1,4 @@
-import { shuffle } from './terrain.js';
+import { shuffle, treeRemovalPlan, isTreeColumn } from './terrain.js';
 
 const TICK = 1; // 年齢を進める間隔(秒)
 const DECAY_STEP_INTERVAL = 1.8; // 枯れ・崩れで1ブロック消える間隔
@@ -70,8 +70,7 @@ export class Aging {
   // 露出している type ブロックの年齢を進め、寿命が来たら expire する
   ageTops(type, lifeRange, expire) {
     const alive = new Set();
-    for (const [c, r] of this.world.columns()) {
-      if (this.world.topType(c, r) !== type) continue;
+    for (const [c, r] of this.world.topsOfType(type)) {
       const key = `${type}:${c},${r}`;
       alive.add(key);
       let entry = this.ages.get(key);
@@ -115,29 +114,11 @@ export class Aging {
 
   // 木の立ち枯れ: 葉を散らし、幹を上から少しずつ崩す
   maybeKillTree() {
-    const trunks = [...this.world.columns()].filter(([c, r]) => {
-      const stack = this.world.stackAt(c, r);
-      return stack.includes('wood') && stack.includes('leaves');
-    });
+    const trunks = this.world.columnsWhere((c, r) => isTreeColumn(this.world, c, r));
     if (trunks.length === 0 || Math.random() >= trunks.length * TREE_DECAY_CHANCE) return;
 
     const [c, r] = trunks[Math.floor(Math.random() * trunks.length)];
-    const stack = this.world.stackAt(c, r);
-    // 幹の柱: 葉→幹の順(上から)
-    for (let y = stack.length - 1; y >= 0; y--) {
-      if (stack[y] === 'leaves' || stack[y] === 'wood') {
-        this.queue.push({ col: c, row: r, y, type: stack[y] });
-      }
-    }
-    // まわりに浮いている葉(下が空のもの=樹冠)
-    for (const [nc, nr] of this.world.neighbors(c, r)) {
-      const ns = this.world.stackAt(nc, nr);
-      for (let y = ns.length - 1; y > 0; y--) {
-        if (ns[y] === 'leaves' && !ns[y - 1]) {
-          this.queue.push({ col: nc, row: nr, y, type: 'leaves' });
-        }
-      }
-    }
+    this.queue.push(...treeRemovalPlan(this.world, c, r).map((b) => ({ ...b })));
     this.queueLabel = '🍂 ふるい木がかれた';
   }
 

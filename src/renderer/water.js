@@ -39,11 +39,18 @@ export class WaterSim {
       }
     }
 
-    // 走査が終わってからまとめて流す(1ティックで連鎖しないように)
+    // 走査が終わってからまとめて流す(1ティックで連鎖しないように)。
+    // 同じマスへ複数の流れが届いたときは、いちばん小さい距離を採用する
+    // (滝で落ちた水 dist=0 を、平地からの流れ dist=3 が上書きしないように)
     for (const flow of flows) {
-      if (this.world.topType(flow.col, flow.row) === 'water') continue;
+      const key = `${flow.col},${flow.row}`;
+      if (this.world.topType(flow.col, flow.row) === 'water') {
+        const current = this.spreadDist.get(key);
+        if (current === undefined || flow.dist < current) this.spreadDist.set(key, flow.dist);
+        continue;
+      }
       if (this.world.placeTop(flow.col, flow.row, 'water')) {
-        this.spreadDist.set(`${flow.col},${flow.row}`, flow.dist);
+        this.spreadDist.set(key, flow.dist);
       }
     }
 

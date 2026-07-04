@@ -50,7 +50,9 @@ export function generateWorld(cols, rows, maxHeight) {
     plantTree(world, grassColumns[i][0], grassColumns[i][1]);
   }
   for (let i = treeCount; i < treeCount + 4 && i < grassColumns.length; i++) {
-    world.addFlower(grassColumns[i][0], grassColumns[i][1]);
+    const [c, r] = grassColumns[i];
+    // 木が生えて樹冠になったマスには咲かせない
+    if (world.topType(c, r) === 'grass') world.addFlower(c, r);
   }
 
   world.version++;
@@ -83,6 +85,37 @@ export function plantTree(world, col, row) {
   if (!plan) return false;
   for (const b of plan) world.setBlock(b.col, b.row, b.y, b.type);
   return true;
+}
+
+// 幹の柱と樹冠をまとめて消すための一覧(枯れ・伐採で共用)。
+// 隣の葉は「幹に葉がある高さ」と「宙に浮いている葉」の両方を対象にする
+// (斜面では樹冠の葉が地面に接して置かれることがあるため)。
+export function treeRemovalPlan(world, col, row) {
+  const stack = world.stackAt(col, row);
+  const blocks = [];
+  const canopyLevels = new Set();
+  for (let y = stack.length - 1; y >= 0; y--) {
+    if (stack[y] === 'leaves') canopyLevels.add(y);
+    if (stack[y] === 'leaves' || stack[y] === 'wood') {
+      blocks.push({ col, row, y, type: stack[y] });
+    }
+  }
+  for (const [nc, nr] of world.neighbors(col, row)) {
+    const ns = world.stackAt(nc, nr);
+    for (let y = ns.length - 1; y >= 0; y--) {
+      if (ns[y] !== 'leaves') continue;
+      if (canopyLevels.has(y) || (y > 0 && !ns[y - 1])) {
+        blocks.push({ col: nc, row: nr, y, type: 'leaves' });
+      }
+    }
+  }
+  return blocks;
+}
+
+// 「木」の定義: 幹と葉の両方を含む柱(小屋の屋根の木材と区別する)
+export function isTreeColumn(world, col, row) {
+  const stack = world.stackAt(col, row);
+  return stack.includes('wood') && stack.includes('leaves');
 }
 
 export function shuffle(array) {

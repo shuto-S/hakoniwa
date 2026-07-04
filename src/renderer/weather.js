@@ -274,8 +274,8 @@ export class WeatherSystem {
   }
 
   spawnPuddle() {
-    const spots = [...this.world.columns()].filter(
-      ([c, r]) =>
+    const spots = this.world.columnsWhere(
+      (c, r) =>
         PUDDLE_TOPS.has(this.world.topType(c, r)) &&
         !this.puddles.some((p) => p.col === c && p.row === r)
     );

@@ -150,15 +150,13 @@ export class World {
 
   // 家の中心 = 屋根(き)が頭上にあり、まわりの過半にレンガの壁がある柱
   hutCenters() {
-    const centers = [];
-    for (const [c, r] of this.columns()) {
-      if (this.topType(c, r) !== 'wood') continue;
+    return this.columnsWhere((c, r) => {
+      if (this.topType(c, r) !== 'wood') return false;
       const walls = this.neighbors(c, r).filter(([nc, nr]) =>
         this.stackAt(nc, nr).includes('brick')
       );
-      if (walls.length >= 4) centers.push([c, r]);
-    }
-    return centers;
+      return walls.length >= 4;
+    });
   }
 
   // 六角グリッド上のマス距離
@@ -211,6 +209,20 @@ export class World {
         yield [col, row];
       }
     }
+  }
+
+  // 条件に合うマスの一覧
+  columnsWhere(predicate) {
+    const result = [];
+    for (const [col, row] of this.columns()) {
+      if (predicate(col, row)) result.push([col, row]);
+    }
+    return result;
+  }
+
+  // 一番上が type のマスの一覧
+  topsOfType(type) {
+    return this.columnsWhere((col, row) => this.topType(col, row) === type);
   }
 
   serialize() {

@@ -1,9 +1,7 @@
 import * as THREE from 'three';
 import { MAX_CHARACTERS } from './config.js';
-import { shuffle, treePlan } from './terrain.js';
-
-const SHIRT_COLORS = [0xe6704b, 0x4b8fe6, 0x53b86a, 0xd9a441, 0x9a6fd0];
-const CAT_COLORS = [0x3a3a3a, 0xd9a441, 0xe8e2d4, 0x8a7a6a];
+import { shuffle, treePlan, treeRemovalPlan, isTreeColumn } from './terrain.js';
+import { MAKERS } from './characterMeshes.js';
 
 const NAMES = {
   villager: ['そら', 'うみ', 'はな', 'ゆず', 'こはる', 'もも', 'りん', 'たろう', 'あおい', 'つむぎ', 'さくら', 'ふうた'],
@@ -38,129 +36,14 @@ const MOVE_DURATION = {
 };
 const VISITOR_TYPES = new Set(['traveler', 'deer', 'cat']);
 
-function part(geometry, color, x, y, z) {
-  const mesh = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true })
-  );
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  return mesh;
+// キャラの体はパーツごとに固有のジオメトリ/マテリアルを持つので、
+// シーンから外すときに必ず破棄する(常駐アプリでのGPUリーク防止)
+function disposeMesh(root) {
+  root.traverse((obj) => {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+  });
 }
-
-// モデルはすべて +Z が正面
-function makeVillagerMesh(character) {
-  const group = new THREE.Group();
-  const shirt = SHIRT_COLORS[Math.floor(Math.random() * SHIRT_COLORS.length)];
-  group.add(part(new THREE.CylinderGeometry(0.045, 0.05, 0.1, 6), 0x5a4632, -0.05, 0.05, 0));
-  group.add(part(new THREE.CylinderGeometry(0.045, 0.05, 0.1, 6), 0x5a4632, 0.05, 0.05, 0));
-  group.add(part(new THREE.CylinderGeometry(0.1, 0.12, 0.22, 6), shirt, 0, 0.21, 0));
-  group.add(part(new THREE.SphereGeometry(0.1, 8, 6), 0xf0c8a0, 0, 0.42, 0));
-
-  // しごとで持ちものと帽子が変わる
-  if (character.job === 'のうふ') {
-    group.add(part(new THREE.ConeGeometry(0.19, 0.08, 8), 0xd9c27a, 0, 0.5, 0)); // 麦わら帽子
-  } else if (character.job === 'きこり') {
-    group.add(part(new THREE.CylinderGeometry(0.09, 0.1, 0.05, 6), 0x5a4632, 0, 0.51, 0)); // 帽子
-    const handle = part(new THREE.CylinderGeometry(0.014, 0.014, 0.3, 4), 0x8a6a42, 0.15, 0.24, 0.04);
-    handle.rotation.z = 0.35;
-    group.add(handle);
-    group.add(part(new THREE.BoxGeometry(0.07, 0.05, 0.02), 0x9a9aa2, 0.2, 0.36, 0.04)); // 斧
-  } else if (character.job === 'つりびと') {
-    group.add(part(new THREE.ConeGeometry(0.11, 0.12, 6), shirt, 0, 0.53, 0));
-    const rod = part(new THREE.CylinderGeometry(0.008, 0.008, 0.45, 4), 0x6a5236, 0.13, 0.35, 0.12);
-    rod.rotation.x = -0.9;
-    group.add(rod);
-  } else {
-    group.add(part(new THREE.ConeGeometry(0.11, 0.12, 6), shirt, 0, 0.53, 0));
-  }
-  return group;
-}
-
-function makeSheepMesh(character) {
-  const wool = character.variant === 'black' ? 0x3c3833 : 0xf2efe6;
-  const group = new THREE.Group();
-  for (const [x, z] of [[-0.08, -0.07], [0.08, -0.07], [-0.08, 0.07], [0.08, 0.07]]) {
-    group.add(part(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 5), 0x4a4040, x, 0.05, z));
-  }
-  const body = part(new THREE.SphereGeometry(0.15, 8, 6), wool, 0, 0.2, 0);
-  body.scale.set(1, 0.85, 1.25);
-  group.add(body);
-  group.add(part(new THREE.BoxGeometry(0.11, 0.11, 0.1), 0x4a4040, 0, 0.24, 0.19));
-  group.add(part(new THREE.SphereGeometry(0.07, 6, 5), wool, 0, 0.31, 0.13));
-  return group;
-}
-
-function makeChickenMesh() {
-  const group = new THREE.Group();
-  const body = part(new THREE.SphereGeometry(0.1, 8, 6), 0xfaf7ef, 0, 0.12, 0);
-  body.scale.set(0.9, 1, 1.15);
-  group.add(body);
-  group.add(part(new THREE.SphereGeometry(0.06, 6, 5), 0xfaf7ef, 0, 0.24, 0.06));
-  group.add(part(new THREE.ConeGeometry(0.025, 0.06, 4), 0xe8a33d, 0, 0.24, 0.14).rotateX(Math.PI / 2));
-  group.add(part(new THREE.BoxGeometry(0.02, 0.05, 0.04), 0xd8453c, 0, 0.31, 0.05));
-  return group;
-}
-
-// 旅人: マップを通り過ぎていく、蓑と笠のひと
-function makeTravelerMesh() {
-  const group = new THREE.Group();
-  group.add(part(new THREE.CylinderGeometry(0.045, 0.05, 0.1, 6), 0x4a3f30, -0.05, 0.05, 0));
-  group.add(part(new THREE.CylinderGeometry(0.045, 0.05, 0.1, 6), 0x4a3f30, 0.05, 0.05, 0));
-  group.add(part(new THREE.CylinderGeometry(0.09, 0.14, 0.24, 6), 0x8a7f6a, 0, 0.22, 0));
-  group.add(part(new THREE.SphereGeometry(0.09, 8, 6), 0xe8bd93, 0, 0.42, 0));
-  group.add(part(new THREE.ConeGeometry(0.17, 0.09, 8), 0xb09a5f, 0, 0.51, 0));
-  group.add(part(new THREE.CylinderGeometry(0.012, 0.012, 0.5, 4), 0x6a5236, 0.14, 0.25, 0.03));
-  return group;
-}
-
-// しか(低確率の訪問者)
-function makeDeerMesh() {
-  const group = new THREE.Group();
-  for (const [x, z] of [[-0.07, -0.09], [0.07, -0.09], [-0.07, 0.09], [0.07, 0.09]]) {
-    group.add(part(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 4), 0x7a5236, x, 0.08, z));
-  }
-  const body = part(new THREE.SphereGeometry(0.13, 8, 6), 0x9a6b42, 0, 0.22, 0);
-  body.scale.set(0.85, 0.8, 1.3);
-  group.add(body);
-  const neck = part(new THREE.CylinderGeometry(0.04, 0.05, 0.16, 5), 0x9a6b42, 0, 0.34, 0.13);
-  neck.rotation.x = -0.4;
-  group.add(neck);
-  group.add(part(new THREE.SphereGeometry(0.06, 6, 5), 0x9a6b42, 0, 0.44, 0.18));
-  // つの
-  for (const side of [-1, 1]) {
-    const antler = part(new THREE.CylinderGeometry(0.008, 0.012, 0.14, 4), 0xd9c8a8, side * 0.04, 0.54, 0.15);
-    antler.rotation.z = side * 0.5;
-    group.add(antler);
-  }
-  return group;
-}
-
-// ねこ(低確率の訪問者)
-function makeCatMesh() {
-  const fur = CAT_COLORS[Math.floor(Math.random() * CAT_COLORS.length)];
-  const group = new THREE.Group();
-  const body = part(new THREE.SphereGeometry(0.09, 8, 6), fur, 0, 0.1, 0);
-  body.scale.set(0.9, 0.8, 1.3);
-  group.add(body);
-  group.add(part(new THREE.SphereGeometry(0.06, 6, 5), fur, 0, 0.19, 0.1));
-  for (const side of [-1, 1]) {
-    group.add(part(new THREE.ConeGeometry(0.02, 0.05, 4), fur, side * 0.035, 0.26, 0.09));
-  }
-  const tail = part(new THREE.CylinderGeometry(0.012, 0.018, 0.18, 4), fur, 0, 0.16, -0.13);
-  tail.rotation.x = 0.9;
-  group.add(tail);
-  return group;
-}
-
-const MAKERS = {
-  villager: makeVillagerMesh,
-  sheep: makeSheepMesh,
-  chicken: makeChickenMesh,
-  traveler: makeTravelerMesh,
-  deer: makeDeerMesh,
-  cat: makeCatMesh,
-};
 
 class Character {
   constructor(type, col, row, world, scaleBase, opts = {}) {
@@ -399,12 +282,34 @@ export class CharacterManager {
 
   setWorld(world) {
     this.world = world;
-    for (const c of this.characters) this.scene.remove(c.mesh);
-    for (const egg of this.eggs) this.scene.remove(egg.mesh);
+    for (const c of this.characters) {
+      this.scene.remove(c.mesh);
+      disposeMesh(c.mesh);
+    }
+    for (const egg of this.eggs) this.scene.remove(egg.mesh); // 卵は共有ジオメトリなので破棄しない
     this.characters = [];
     this.eggs = [];
     this.jobQueue = [];
     this.festivalActive = false;
+  }
+
+  // 池の氷がとけた春などに、歩けないマスに取り残されたキャラを助ける
+  rescueStranded() {
+    const walkable = this.world.columnsWhere((c, r) => this.world.isWalkable(c, r));
+    if (walkable.length === 0) return;
+    for (const c of this.characters) {
+      if (this.world.isWalkable(c.col, c.row)) continue;
+      walkable.sort(
+        (a, b) =>
+          this.world.distance(c.col, c.row, a[0], a[1]) -
+          this.world.distance(c.col, c.row, b[0], b[1])
+      );
+      [c.col, c.row] = walkable[0];
+      const p = this.world.positionOf(c.col, c.row);
+      c.mesh.position.set(p.x, this.world.topSurfaceY(c.col, c.row), p.z);
+      c.state = 'idle';
+      c.idleTimer = 1 + Math.random();
+    }
   }
 
   scaleOf(character) {
@@ -430,9 +335,7 @@ export class CharacterManager {
 
   spawn(type) {
     if (this.characters.length >= MAX_CHARACTERS) return false;
-    const spots = shuffle(
-      [...this.world.columns()].filter(([c, r]) => this.world.isWalkable(c, r))
-    );
+    const spots = shuffle(this.world.columnsWhere((c, r) => this.world.isWalkable(c, r)));
     if (spots.length === 0) return false;
     const [col, row] = spots[0];
     return this.spawnAt(type, col, row);
@@ -458,8 +361,8 @@ export class CharacterManager {
 
   // マップの端から訪問者がやってくる
   spawnVisitor(type) {
-    const edges = [...this.world.columns()].filter(
-      ([c, r]) =>
+    const edges = this.world.columnsWhere(
+      (c, r) =>
         (c === 0 || r === 0 || c === this.world.cols - 1 || r === this.world.rows - 1) &&
         this.world.isWalkable(c, r)
     );
@@ -469,9 +372,7 @@ export class CharacterManager {
   }
 
   campfireColumns() {
-    return [...this.world.columns()].filter(
-      ([c, r]) => this.world.topType(c, r) === 'campfire'
-    );
+    return this.world.topsOfType('campfire');
   }
 
   // 夜のはじまり: 3日にいちど、火があればおまつり。ふだんは家へ
@@ -492,7 +393,11 @@ export class CharacterManager {
       for (const c of this.characters) {
         c.targetSpot = fires[0];
         c.task = null;
-        if (c.state === 'working' || c.state === 'fishing') c.state = 'idle';
+        if (c.state === 'working' || c.state === 'fishing') {
+          c.state = 'idle';
+          c.mesh.rotation.z = 0; // 作業中の傾きを戻す
+          c.mesh.rotation.x = 0;
+        }
       }
       if (this.onEvent) this.onEvent('🎉 たきびのまわりで おまつりが はじまった!');
       return;
@@ -532,6 +437,7 @@ export class CharacterManager {
       const capacity = this.world.hutCenters().length * 2;
       for (const c of leaving) {
         this.scene.remove(c.mesh);
+        disposeMesh(c.mesh);
         if (c.type === 'traveler') {
           const villagers = this.characters.filter((v) => v.type === 'villager').length;
           if (villagers < capacity && Math.random() < 0.6) {
@@ -650,10 +556,7 @@ export class CharacterManager {
   assignTask(c) {
     if (c.job === 'きこり') {
       if (this.jobQueue.length > 0) return;
-      const trunks = [...this.world.columns()].filter(([tc, tr]) => {
-        const stack = this.world.stackAt(tc, tr);
-        return stack.includes('wood') && stack.includes('leaves');
-      });
+      const trunks = this.world.columnsWhere((tc, tr) => isTreeColumn(this.world, tc, tr));
       if (trunks.length < 5) {
         c.jobCooldown = 60;
         return;
@@ -673,8 +576,8 @@ export class CharacterManager {
         c.task = { kind: 'harvest', target: key.split(',').map(Number) };
         return;
       }
-      const empty = [...this.world.columns()].filter(
-        ([tc, tr]) =>
+      const empty = this.world.columnsWhere(
+        (tc, tr) =>
           this.world.topType(tc, tr) === 'farm' && !this.world.crops.has(`${tc},${tr}`)
       );
       if (empty.length > 0) {
@@ -682,14 +585,12 @@ export class CharacterManager {
         return;
       }
       // はたけが足りなければ、家のそばの草地をたがやす
-      const farms = [...this.world.columns()].filter(
-        ([tc, tr]) => this.world.topType(tc, tr) === 'farm'
-      );
+      const farms = this.world.topsOfType('farm');
       if (farms.length < 4) {
         const huts = this.world.hutCenters();
         const spots = shuffle(
-          [...this.world.columns()].filter(
-            ([tc, tr]) =>
+          this.world.columnsWhere(
+            (tc, tr) =>
               this.world.topType(tc, tr) === 'grass' &&
               huts.some(([hc, hr]) => this.world.distance(tc, tr, hc, hr) <= 2)
           )
@@ -704,8 +605,8 @@ export class CharacterManager {
     }
     if (c.job === 'つりびと') {
       const spots = shuffle(
-        [...this.world.columns()].filter(
-          ([tc, tr]) =>
+        this.world.columnsWhere(
+          (tc, tr) =>
             this.world.isWalkable(tc, tr) &&
             this.world
               .neighbors(tc, tr)
@@ -728,25 +629,14 @@ export class CharacterManager {
     const [tc, tr] = task.target;
 
     if (task.kind === 'chop') {
-      const stack = this.world.stackAt(tc, tr);
-      if (!stack.includes('wood')) return; // もう誰かが片づけた
-      for (let y = stack.length - 1; y >= 0; y--) {
-        if (stack[y] === 'leaves' || stack[y] === 'wood') {
-          this.jobQueue.push({ col: tc, row: tr, y, type: null });
-        }
-      }
-      for (const [nc, nr] of this.world.neighbors(tc, tr)) {
-        const ns = this.world.stackAt(nc, nr);
-        for (let y = ns.length - 1; y > 0; y--) {
-          if (ns[y] === 'leaves' && !ns[y - 1]) {
-            this.jobQueue.push({ col: nc, row: nr, y, type: null });
-          }
-        }
-      }
+      if (!isTreeColumn(this.world, tc, tr)) return; // もう誰かが片づけた
+      this.jobQueue.push(
+        ...treeRemovalPlan(this.world, tc, tr).map((b) => ({ ...b, type: null }))
+      );
       // 近くの草地に苗を植える
       const spots = shuffle(
-        [...this.world.columns()].filter(
-          ([sc, sr]) =>
+        this.world.columnsWhere(
+          (sc, sr) =>
             this.world.topType(sc, sr) === 'grass' &&
             this.world.distance(sc, sr, tc, tr) <= 3 &&
             this.world

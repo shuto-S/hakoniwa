@@ -9,6 +9,7 @@
     "build": "esbuild src/renderer/main.js --bundle --outfile=dist/renderer.js --log-level=warning",
     "watch": "esbuild src/renderer/main.js --bundle --outfile=dist/renderer.js --watch",
     "start": "npm run build && electron .",
+    "test": "node --test \"test/*.test.mjs\"",
     "package": "npm run build && electron-packager . はこにわ --platform=darwin --arch=arm64 --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.hakoniwa --ignore=\"^/src\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/node_modules\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\\.md\""
   },
   "dependencies": {

@@ -90,10 +90,11 @@ export class SceneView {
       opacity: 0.72,
       depthWrite: false,
     });
+    // 水も積み重ねられるので、上限は不透明ブロックと同じにする
     this.waterMesh = new THREE.InstancedMesh(
       this.hexGeometry(0.985, BLOCK_HEIGHT * 0.82),
       waterMaterial,
-      this.world.cols * this.world.rows
+      capacity
     );
 
     // 花とたきびは数が少ないので、インスタンシングせず細かいモデルを組む
@@ -298,8 +299,11 @@ export class SceneView {
       this.campfireGroup,
       this.hutLightGroup
     );
-    this.solidMesh.dispose();
-    this.waterMesh.dispose();
+    for (const mesh of [this.solidMesh, this.waterMesh]) {
+      mesh.dispose(); // インスタンス属性
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
     this.buildInstancedMeshes();
     this.fitCameraToWorld();
     this.rebuild();
@@ -391,6 +395,9 @@ export class SceneView {
     this.solidMesh.instanceMatrix.needsUpdate = true;
     this.waterMesh.instanceMatrix.needsUpdate = true;
     if (this.solidMesh.instanceColor) this.solidMesh.instanceColor.needsUpdate = true;
+    // 古い境界球のままだと、高く積んだブロックがレイキャストに当たらない
+    this.solidMesh.boundingSphere = null;
+    this.waterMesh.boundingSphere = null;
   }
 
   fitCameraToWorld() {

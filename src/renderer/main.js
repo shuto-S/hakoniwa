@@ -96,6 +96,7 @@ async function main() {
     view.seasonColors = { leaves: season.leaves, grass: season.grass };
     world.frozen = season.key === 'winter';
     world.version++; // 色と氷を描き直す
+    characters.rescueStranded(); // 氷がとけて水上に取り残されたキャラを助ける
     setSeasonDisplay(season, daynight.day);
     if (announce) showToast(`${season.emoji} ${season.name}になった`);
   }
@@ -184,6 +185,7 @@ async function main() {
         critters.setWorld(world);
         spawnStarterCharacters(characters);
         applySeason(false);
+        renderedVersion = -1; // 新しい世界を必ず描き直す
         scheduleSave();
       },
     },

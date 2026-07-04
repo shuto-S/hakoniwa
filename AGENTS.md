@@ -64,8 +64,13 @@ src/renderer/
   i18n/locales/ja.js       日本語辞書(基準)。en.js は英語。LOCALES に足せば言語追加
   ai/client.js             レンダラー側 AI クライアント(オプトイン判定・レート上限・
                            プール・失敗時 null)。フレーバー機能はここだけ使う
-  ai/flavor.js             プロンプト生成の純ロジック(mutter/poem/tale/chronicle/names)
-                           + cleanLine/parseNameList。テスト test/ai-flavor.test.mjs
+  ai/flavor.js             プロンプト生成の純ロジック(mutter/poem/tale/chronicle/names/worldgen)
+                           + cleanLine/parseNameList/parseParams。テスト test/ai-flavor.test.mjs
+  ai/generate.js           生成オーケストレーション(prompt→generate→整形)。main はこれを呼ぶだけ
+  ai/registry.js           自己記述層(#5): describeBlocks / イベント descriptor /
+                           アクションレジストリ / worldManifest。新要素は説明1行 or 登録1つ
+  ai/observe.js            observeWorld: 世界を汎用に走査して観測を作る(#4 が使う)
+  worldgen-schema.js       ことばで世界生成のパラメータ定義・スキーマ・clampParams(#3)
 ```
 
 このほかリポジトリ直下に `ai/main-service.js`(**メインプロセス側**の Gemini 連携。
@@ -194,6 +199,11 @@ src/renderer/
   AI命名(ai のプール `name:<type>` を背景補充し characters.aiNamePool.take が優先)。
   すべて ai.available()/ai.generate の null フォールバックで、AI 無効時は従来動作。
   新しいフレーバーを足すときも「プロンプトは flavor.js の純関数 + main で配線 + null 時は何もしない」。
+- **自己記述層(#5)= ai/registry.js が単一の真実の source**。新ブロックは BLOCK_DESC に1行、
+  新イベントは registerEvent、新アクションは registerAction すれば、フレーバー(一句)/世界生成/
+  エージェント(#4)が**追加コードなしで**対応する。イベント種を flavor に直書きしないこと。
+  #4 のエージェントは actionFunctionDeclarations() を Gemini の function calling に渡し、
+  observeWorld() で観測を渡す設計(main-service.generate は tools 引数を受ける)。
 
 ### 設定の追加手順
 新しい設定(DEFAULT_SETTINGS のキー)を足すときは4か所:

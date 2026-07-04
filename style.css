@@ -177,6 +177,10 @@ button.active {
   align-items: center;
   justify-content: center;
   z-index: 30;
+  /* 透明ウィンドウでは、全面を覆う半透明レイヤーが合成から抜け落ちて
+     まったく描画されないことがある(Chromiumのバグ)。
+     transform で独自の合成レイヤーに昇格させると正しく描画される。消さないこと */
+  transform: translateZ(0);
 }
 
 #shot-modal.hidden {

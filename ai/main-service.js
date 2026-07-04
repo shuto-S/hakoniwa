@@ -79,6 +79,10 @@ async function generate(opts) {
     config.responseMimeType = 'application/json';
     config.responseSchema = opts.schema;
   }
+  // function calling(#4 用): アクションレジストリから作ったツール宣言を渡せる
+  if (opts.tools && opts.tools.length) {
+    config.tools = [{ functionDeclarations: opts.tools }];
+  }
 
   const call = client.models.generateContent({
     model: opts.model || 'gemini-2.5-flash',

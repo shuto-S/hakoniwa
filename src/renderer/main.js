@@ -421,55 +421,60 @@ async function main() {
       return;
     }
     lastFrameAt = now;
-    const dt = Math.min(0.1, clock.getDelta());
-    const time = clock.elapsedTime;
+    // 1フレーム内の例外でアニメーションループ全体を止めない(次フレームは必ず予約する)
+    try {
+      const dt = Math.min(0.1, clock.getDelta());
+      const time = clock.elapsedTime;
 
-    autopilot.update(dt);
-    if (!world.frozen) waterSim.update(dt);
-    aging.update(dt);
-    weather.update(dt);
-    daynight.update(dt, weather.current);
+      autopilot.update(dt);
+      if (!world.frozen) waterSim.update(dt);
+      aging.update(dt);
+      weather.update(dt);
+      daynight.update(dt, weather.current);
 
-    // 季節と日付の変わり目
-    if (daynight.seasonIndex !== lastSeasonIndex) {
-      lastSeasonIndex = daynight.seasonIndex;
-      applySeason(true);
-    } else if (daynight.day !== lastDay) {
-      setSeasonDisplay(daynight.season, daynight.day);
+      // 季節と日付の変わり目
+      if (daynight.seasonIndex !== lastSeasonIndex) {
+        lastSeasonIndex = daynight.seasonIndex;
+        applySeason(true);
+      } else if (daynight.day !== lastDay) {
+        setSeasonDisplay(daynight.season, daynight.day);
+      }
+      if (daynight.day !== lastDay) morningChronicle(); // 朝のかわら版(前日ぶん)
+      lastDay = daynight.day;
+
+      view.nightGlow = daynight.isNight ? 1 : 0;
+      audio.update(dt, {
+        weatherState: weather.state,
+        daylight: daynight.daylight,
+        isNight: daynight.isNight,
+        season: daynight.season.key,
+        campfires: view.campfires.length,
+      });
+      critters.update(dt);
+      seasonal.update(dt);
+      updateVisitors(dt);
+      updateMutters(dt);
+      nameRefillTimer -= dt;
+      if (nameRefillTimer <= 0) {
+        nameRefillTimer = 45;
+        refillNamePools();
+      }
+      characters.update(dt, time, daynight.isNight);
+      view.update(dt);
+
+      if (world.version !== renderedVersion) {
+        view.rebuild();
+        renderedVersion = world.version;
+        scheduleSave();
+      }
+
+      const mode = hovered ? (state.tool === 'erase' ? 'remove' : 'place') : null;
+      view.setGhost(hovered, mode, state.tool === 'erase' ? 'grass' : state.tool);
+
+      view.render();
+    } catch (err) {
+      console.error('frame update error:', err);
     }
-    if (daynight.day !== lastDay) morningChronicle(); // 朝のかわら版(前日ぶん)
-    lastDay = daynight.day;
-
-    view.nightGlow = daynight.isNight ? 1 : 0;
-    audio.update(dt, {
-      weatherState: weather.state,
-      daylight: daynight.daylight,
-      isNight: daynight.isNight,
-      season: daynight.season.key,
-      campfires: view.campfires.length,
-    });
-    critters.update(dt);
-    seasonal.update(dt);
-    updateVisitors(dt);
-    updateMutters(dt);
-    nameRefillTimer -= dt;
-    if (nameRefillTimer <= 0) {
-      nameRefillTimer = 45;
-      refillNamePools();
-    }
-    characters.update(dt, time, daynight.isNight);
-    view.update(dt);
-
-    if (world.version !== renderedVersion) {
-      view.rebuild();
-      renderedVersion = world.version;
-      scheduleSave();
-    }
-
-    const mode = hovered ? (state.tool === 'erase' ? 'remove' : 'place') : null;
-    view.setGhost(hovered, mode, state.tool === 'erase' ? 'grass' : state.tool);
-
-    view.render();
     requestAnimationFrame(frame);
   }
 

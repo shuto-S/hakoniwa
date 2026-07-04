@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { BLOCK_HEIGHT, HEX_RADIUS } from './config.js';
 import { clearGroup } from './three-utils.js';
-import { t } from './i18n/index.js';
+// アニメーションで局所的に const t(進行度)を多用するため、翻訳関数は別名で読む。
+// 同名だと関数スコープ全体で局所 t が巻き上がり、翻訳 t を呼ぶ行が TDZ で落ちる。
+import { t as translate } from './i18n/index.js';
 
 const BUTTERFLY_COLORS = [0xf2a0c0, 0xf2d54e, 0x9ad4f2, 0xd0a0f2];
 
@@ -79,7 +81,7 @@ export class CritterSystem {
       this.whaleFlight = { t: 0 };
       this.whale.visible = true;
       this.whale.position.set(-this.span / 2 - 2.5, this.skyY + 2.2, -this.span * 0.15);
-      if (this.onEvent) this.onEvent(t('event.rareWhale'));
+      if (this.onEvent) this.onEvent(translate('event.rareWhale'));
       if (this.onFlavor) this.onFlavor('whale');
       return;
     }
@@ -123,7 +125,7 @@ export class CritterSystem {
       this.settings.skyShows && this.daynight.isNight && this.weather.state === 'sunny';
     if (active && this.showerT <= 0 && Math.random() < dt / 2400) {
       this.showerT = 25;
-      if (this.onEvent) this.onEvent(t('event.rareMeteor'));
+      if (this.onEvent) this.onEvent(translate('event.rareMeteor'));
       if (this.onFlavor) this.onFlavor('meteor');
     }
 
@@ -277,7 +279,7 @@ export class CritterSystem {
       // 低確率で金色のさかな
       const golden = Math.random() < 0.05;
       this.fish.material.color.setHex(golden ? 0xf2c33d : 0xe89a4a);
-      if (golden && this.onEvent) this.onEvent(t('event.rareGoldFish'));
+      if (golden && this.onEvent) this.onEvent(translate('event.rareGoldFish'));
       if (golden && this.onFlavor) this.onFlavor('goldfish');
       this.fish.visible = true;
       return;

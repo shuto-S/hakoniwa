@@ -8,4 +8,12 @@ contextBridge.exposeInMainWorld('tsuminiwa', {
   saveScreenshot: (dataUrl) => ipcRenderer.invoke('shot:save', dataUrl),
   shareToX: (dataUrl) => ipcRenderer.invoke('shot:share', dataUrl),
   setAutoLaunch: (enabled) => ipcRenderer.send('app:autolaunch', enabled),
+  // AI(Gemini)。生成・接続テスト・キー管理はメインプロセスで実行
+  ai: {
+    setKey: (key) => ipcRenderer.invoke('ai:setKey', key),
+    clearKey: () => ipcRenderer.invoke('ai:clearKey'),
+    hasKey: () => ipcRenderer.invoke('ai:hasKey'),
+    test: (opts) => ipcRenderer.invoke('ai:test', opts),
+    generate: (opts) => ipcRenderer.invoke('ai:generate', opts),
+  },
 });

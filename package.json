@@ -10,9 +10,10 @@
     "watch": "esbuild src/renderer/main.js --bundle --outfile=dist/renderer.js --watch",
     "start": "npm run build && electron .",
     "test": "node --test test/*.test.mjs",
-    "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/node_modules\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\""
+    "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\""
   },
   "dependencies": {
+    "@google/genai": "^2.10.0",
     "three": "^0.178.0"
   },
   "devDependencies": {
@@ -23,6 +24,7 @@
   },
   "allowScripts": {
     "electron@37.10.3": true,
-    "esbuild@0.25.12": true
+    "esbuild@0.25.12": true,
+    "protobufjs@7.6.5": true
   }
 }

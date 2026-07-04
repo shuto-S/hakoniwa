@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, screen, clipboard, nativeImage, shell } = require('electron');
 const fs = require('fs');
 const path = require('path');
+const ai = require('./ai/main-service.js');
 
 const SHARE_TEXT = 'デスクトップのすみで、ちいさな世界が育っています 🌱 #つみにわ\nhttps://github.com/shuto-S/tsuminiwa';
 
@@ -58,6 +59,16 @@ ipcMain.handle('world:save', async (_event, json) => {
 });
 
 ipcMain.on('app:quit', () => app.quit());
+
+// ---- AI(Gemini)。キーの保存・接続テスト・生成はすべてメインプロセスで ----
+ipcMain.handle('ai:setKey', (_event, key) => ai.storeKey(key));
+ipcMain.handle('ai:clearKey', () => {
+  ai.clearKey();
+  return true;
+});
+ipcMain.handle('ai:hasKey', () => ai.hasKey());
+ipcMain.handle('ai:test', (_event, opts) => ai.testConnection(opts || {}));
+ipcMain.handle('ai:generate', (_event, opts) => ai.generate(opts || {}));
 
 function pngBuffer(dataUrl) {
   return Buffer.from(dataUrl.split(',')[1], 'base64');

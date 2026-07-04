@@ -2,13 +2,33 @@ const { app, BrowserWindow, ipcMain, screen, clipboard, nativeImage, shell } = r
 const fs = require('fs');
 const path = require('path');
 
-const SHARE_TEXT = 'デスクトップのすみで、ちいさな世界が育っています 🌱 #はこにわ\nhttps://github.com/shuto-S/hakoniwa';
+const SHARE_TEXT = 'デスクトップのすみで、ちいさな世界が育っています 🌱 #つみにわ\nhttps://github.com/shuto-S/tsuminiwa';
 
 const MARGIN = 16;
 let win = null;
 
 function savePath() {
   return path.join(app.getPath('userData'), 'world.json');
+}
+
+// 旧名「はこにわ」で保存していた世界を、新名のフォルダへ一度だけ引き継ぐ。
+// userData はアプリ名から導かれるため、改名で保存先が変わってしまうため
+function migrateOldSave() {
+  const target = savePath();
+  if (fs.existsSync(target)) return;
+  const appData = app.getPath('appData');
+  for (const oldName of ['hakoniwa', 'はこにわ']) {
+    const old = path.join(appData, oldName, 'world.json');
+    if (fs.existsSync(old)) {
+      try {
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.copyFileSync(old, target);
+      } catch {
+        /* 引き継ぎに失敗しても新規の世界で始まる */
+      }
+      return;
+    }
+  }
 }
 
 function createWindow() {
@@ -63,13 +83,13 @@ function pngBuffer(dataUrl) {
   return Buffer.from(dataUrl.split(',')[1], 'base64');
 }
 
-// スクリーンショットをピクチャ/はこにわ に保存
+// スクリーンショットをピクチャ/つみにわ に保存
 ipcMain.handle('shot:save', async (_event, dataUrl) => {
   try {
-    const dir = path.join(app.getPath('pictures'), 'はこにわ');
+    const dir = path.join(app.getPath('pictures'), 'つみにわ');
     await fs.promises.mkdir(dir, { recursive: true });
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const file = path.join(dir, `hakoniwa-${stamp}.png`);
+    const file = path.join(dir, `tsuminiwa-${stamp}.png`);
     await fs.promises.writeFile(file, pngBuffer(dataUrl));
     return file;
   } catch {
@@ -100,7 +120,10 @@ ipcMain.on('window:pin', (_event, pinned) => {
   if (win) win.setAlwaysOnTop(Boolean(pinned), 'floating');
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  migrateOldSave();
+  createWindow();
+});
 
 app.on('window-all-closed', () => app.quit());
 

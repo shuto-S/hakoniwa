@@ -1,5 +1,5 @@
 {
-  "name": "hakoniwa",
+  "name": "tsuminiwa",
   "version": "0.1.0",
   "description": "デスクトップの端で動く、六角ブロックの箱庭",
   "author": "shuto",
@@ -10,7 +10,7 @@
     "watch": "esbuild src/renderer/main.js --bundle --outfile=dist/renderer.js --watch",
     "start": "npm run build && electron .",
     "test": "node --test test/*.test.mjs",
-    "package": "npm run build && electron-packager . はこにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.hakoniwa --ignore=\"^/src\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/node_modules\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\""
+    "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/node_modules\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\""
   },
   "dependencies": {
     "three": "^0.178.0"

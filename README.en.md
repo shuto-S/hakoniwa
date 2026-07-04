@@ -1,6 +1,6 @@
 <div align="center">
 
-# Hakoniwa 🌱
+# Tsuminiwa 🌱
 
 **A tiny world in the corner of your desktop.**
 
@@ -9,13 +9,13 @@ through seasons — while you work. A "watch-and-relax" desktop widget.
 
 [日本語](README.md) | English
 
-[![CI](https://github.com/shuto-S/hakoniwa/actions/workflows/ci.yml/badge.svg)](https://github.com/shuto-S/hakoniwa/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/shuto-S/hakoniwa?color=6cc75a)](https://github.com/shuto-S/hakoniwa/releases)
+[![CI](https://github.com/shuto-S/tsuminiwa/actions/workflows/ci.yml/badge.svg)](https://github.com/shuto-S/tsuminiwa/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/shuto-S/tsuminiwa?color=6cc75a)](https://github.com/shuto-S/tsuminiwa/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS-lightgrey)
 ![Made with](https://img.shields.io/badge/Electron%20%2B%20Three.js-2b3a55)
 
-<img src="docs/demo.gif" width="440" alt="Hakoniwa demo: water flowing, rain passing, a campfire burning, and villagers wandering" />
+<img src="docs/demo.gif" width="440" alt="Tsuminiwa demo: water flowing, rain passing, a campfire burning, and villagers wandering" />
 <br />
 <sub>Pour some water, light a campfire, watch the rain pass — everything else just happens</sub>
 
@@ -49,16 +49,16 @@ but the real point is *watching*.
 
 ### Download
 
-Grab the latest zip from [Releases](https://github.com/shuto-S/hakoniwa/releases)
-(`arm64` = Apple Silicon, `x64` = Intel), unzip, and drop `はこにわ.app` into Applications.
+Grab the latest zip from [Releases](https://github.com/shuto-S/tsuminiwa/releases)
+(`arm64` = Apple Silicon, `x64` = Intel), unzip, and drop `つみにわ.app` into Applications.
 
 > Unsigned build: right-click → "Open" on first launch.
 
 ### Build from source
 
 ```sh
-git clone https://github.com/shuto-S/hakoniwa.git
-cd hakoniwa
+git clone https://github.com/shuto-S/tsuminiwa.git
+cd tsuminiwa
 npm install
 npm start        # run directly
 npm run package  # build the .app (output in release/)

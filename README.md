@@ -1,6 +1,6 @@
 <div align="center">
 
-# はこにわ 🌱
+# つみにわ 🌱
 
 **デスクトップの隅に、ちいさな世界を。**
 
@@ -9,13 +9,13 @@
 
 日本語 | [English](README.en.md)
 
-[![CI](https://github.com/shuto-S/hakoniwa/actions/workflows/ci.yml/badge.svg)](https://github.com/shuto-S/hakoniwa/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/shuto-S/hakoniwa?color=6cc75a)](https://github.com/shuto-S/hakoniwa/releases)
+[![CI](https://github.com/shuto-S/tsuminiwa/actions/workflows/ci.yml/badge.svg)](https://github.com/shuto-S/tsuminiwa/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/shuto-S/tsuminiwa?color=6cc75a)](https://github.com/shuto-S/tsuminiwa/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-macOS%20(Apple%20Silicon)-lightgrey)
 ![Made with](https://img.shields.io/badge/Electron%20%2B%20Three.js-2b3a55)
 
-<img src="docs/demo.gif" width="440" alt="はこにわのデモ: 水が流れ、雨がふって晴れ、たきびが灯り、住民が歩きまわる様子" />
+<img src="docs/demo.gif" width="440" alt="つみにわのデモ: 水が流れ、雨がふって晴れ、たきびが灯り、住民が歩きまわる様子" />
 <br />
 <sub>水を流して、たきびを灯して、雨があがるのを眺める ── あとはぜんぶ勝手に進みます</sub>
 
@@ -50,17 +50,17 @@
 
 ### ダウンロード(かんたん)
 
-[Releases](https://github.com/shuto-S/hakoniwa/releases) から最新の zip
+[Releases](https://github.com/shuto-S/tsuminiwa/releases) から最新の zip
 (`arm64` = Apple Silicon / `x64` = Intel)をダウンロードして展開し、
-`はこにわ.app` をアプリケーションフォルダへ。
+`つみにわ.app` をアプリケーションフォルダへ。
 
 > 署名なしビルドのため、初回だけ右クリック →「開く」で起動してください。
 
 ### ソースからビルド
 
 ```sh
-git clone https://github.com/shuto-S/hakoniwa.git
-cd hakoniwa
+git clone https://github.com/shuto-S/tsuminiwa.git
+cd tsuminiwa
 npm install
 npm start        # そのまま起動
 npm run package  # .app を作る(release/ に出力)
@@ -77,7 +77,7 @@ macOS (Apple Silicon) + Node.js 20+ が必要です。
 | ホイール | ズーム |
 | ⟲ / ⟳ | 視点を60度回転 |
 | 🌱 | 自動発展モード(世界がひとりでに育つ) |
-| 📷 | スクショを撮って確認 → 保存(ピクチャ/はこにわ)か Xでシェア |
+| 📷 | スクショを撮って確認 → 保存(ピクチャ/つみにわ)か Xでシェア |
 | ⚙ | 設定 |
 | 上部バーをドラッグ | ウィンドウ移動 |
 

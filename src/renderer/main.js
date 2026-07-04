@@ -16,7 +16,7 @@ import { setupUI, showToast, setWeatherDisplay, setSeasonDisplay } from './ui.js
 
 async function loadSave() {
   try {
-    const raw = await window.hakoniwa.loadWorld();
+    const raw = await window.tsuminiwa.loadWorld();
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -65,8 +65,8 @@ async function main() {
   const autopilot = new Autopilot(world, characters, state.settings);
   autopilot.enabled = state.auto;
   view.setShadows(state.settings.shadows);
-  window.hakoniwa.setPinned(state.settings.pinned);
-  window.hakoniwa.setAutoLaunch(state.settings.autoLaunch);
+  window.tsuminiwa.setPinned(state.settings.pinned);
+  window.tsuminiwa.setAutoLaunch(state.settings.autoLaunch);
 
   let firstWeather = true;
   const weather = new WeatherSystem(view, world, state.settings, (kind, def) => {
@@ -149,7 +149,7 @@ async function main() {
   let saveTimer = null;
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => window.hakoniwa.saveWorld(snapshot()), 1200);
+    saveTimer = setTimeout(() => window.tsuminiwa.saveWorld(snapshot()), 1200);
   }
 
   // ---- UI ----
@@ -158,7 +158,7 @@ async function main() {
       rotate: (steps) => view.rotate(steps),
       quit: () => {
         clearTimeout(saveTimer);
-        window.hakoniwa.saveWorld(snapshot()).finally(() => window.hakoniwa.quit());
+        window.tsuminiwa.saveWorld(snapshot()).finally(() => window.tsuminiwa.quit());
       },
       autoChanged: (enabled) => {
         autopilot.enabled = enabled;
@@ -171,19 +171,19 @@ async function main() {
       getRoster: () => characters.roster(),
       capture: () => view.captureDataUrl(),
       saveShot: async (dataUrl) => {
-        const file = await window.hakoniwa.saveScreenshot(dataUrl);
-        showToast(file ? '📷 ピクチャの「はこにわ」に保存した' : '📷 保存できなかった…');
+        const file = await window.tsuminiwa.saveScreenshot(dataUrl);
+        showToast(file ? '📷 ピクチャの「つみにわ」に保存した' : '📷 保存できなかった…');
       },
       shareShot: async (dataUrl) => {
-        const ok = await window.hakoniwa.shareToX(dataUrl);
+        const ok = await window.tsuminiwa.shareToX(dataUrl);
         showToast(ok ? '🖼 画像をコピーした! Xの投稿に ⌘V で貼ってね' : 'シェアできなかった…');
       },
       settingChanged: (key, value) => {
         state.settings[key] = value;
         if (key === 'characterScale') characters.applyScale();
         if (key === 'shadows') view.setShadows(value);
-        if (key === 'pinned') window.hakoniwa.setPinned(value);
-        if (key === 'autoLaunch') window.hakoniwa.setAutoLaunch(value);
+        if (key === 'pinned') window.tsuminiwa.setPinned(value);
+        if (key === 'autoLaunch') window.tsuminiwa.setAutoLaunch(value);
         scheduleSave();
       },
       regenerate: (size, maxHeight) => {

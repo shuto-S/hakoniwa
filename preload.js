@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('hakoniwa', {
+contextBridge.exposeInMainWorld('tsuminiwa', {
   loadWorld: () => ipcRenderer.invoke('world:load'),
   saveWorld: (json) => ipcRenderer.invoke('world:save', json),
   quit: () => ipcRenderer.send('app:quit'),

@@ -17,7 +17,7 @@ const OUT_WIDTH = 440; // GIFの横幅(サイズ抑制のため縮小)
 const WARMUP_MS = 5000; // 世界が立ち上がるまでの待ち
 
 // ユーザーのセーブを汚さないよう、使い捨ての userData を使う
-app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'hakoniwa-demo-')));
+app.setPath('userData', fs.mkdtempSync(path.join(os.tmpdir(), 'tsuminiwa-demo-')));
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -155,7 +155,7 @@ app.whenReady().then(async () => {
     frames.push({ bitmap: image.toBitmap(), ...image.getSize() });
     // 撮影の途中経過を確認できるよう、数枚だけ静止画も残す
     if (i === 45 || i === 80 || i === 130) {
-      fs.writeFileSync(path.join(os.tmpdir(), `hakoniwa-frame-${i}.png`), image.toPNG());
+      fs.writeFileSync(path.join(os.tmpdir(), `tsuminiwa-frame-${i}.png`), image.toPNG());
     }
     const nextAt = start + ((i + 1) * 1000) / FPS;
     await sleep(Math.max(0, nextAt - Date.now()));

@@ -70,12 +70,6 @@ export function actionFunctionDeclarations() {
   }));
 }
 
-// テスト用にレジストリを空にする(既定イベントは消える)
-export function _resetRegistries() {
-  events.clear();
-  actions.clear();
-}
-
 // 静的なケイパビリティ表(変化が少ないのでキャッシュ可能)
 export function worldManifest() {
   return {

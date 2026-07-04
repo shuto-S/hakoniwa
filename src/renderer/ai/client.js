@@ -58,8 +58,11 @@ export class AiClient {
   // 1件だけ生成。使えない/失敗時は null(呼び出し側でフォールバック)
   async generate({ system, prompt, schema, maxOutputTokens } = {}) {
     if (!this.available() || !this.underRate()) return null;
-    if (!(await this.backend.hasKey())) return null;
+    // レート枠は await の前に同期で確保する。そうしないと、同じフレームで並行して
+    // 走る別種の生成(つぶやき/かわら版/命名補充)が古い lastCallAt を見て、
+    // 最小間隔・日次上限をすり抜けてしまう(TOCTOU)
     this.noteCall();
+    if (!(await this.backend.hasKey())) return null;
     const res = await this.backend.generate({
       authMode: this.settings.aiAuthMode,
       model: this.settings.aiModel,

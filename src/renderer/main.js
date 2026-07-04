@@ -312,7 +312,8 @@ async function main() {
       regenerate: (size, maxHeight) => rebuildWorld(size, maxHeight),
       // ことばで世界をつくる(#3): AI無効/失敗時は何もしない(従来の世界は保たれる)
       worldgen: async (instruction) => {
-        if (!ai.available()) return;
+        // キーが無いと「思い描いている…→失敗」が毎回チラつくので、先に確認する
+        if (!ai.available() || !(await window.tsuminiwa.ai.hasKey())) return;
         showToast(t('ai.worldgenMaking'));
         const params = await generateWorldParams(ai, instruction, { lang: getLanguage() });
         if (params) {

@@ -171,11 +171,14 @@ export function setupUI(callbacks, state) {
     langSelect.appendChild(opt);
   }
   langSelect.value = state.settings.language;
+  // 言語切替で引き直したい動的テキストの登録先(AI設定などが push する)
+  const langRefreshers = [];
   langSelect.addEventListener('change', () => {
     setLanguage(langSelect.value);
     applyDomTranslations(); // 静的なテキスト・ツールチップ
     refreshPaletteTips();
     for (const r of sliderRefreshers) r();
+    for (const r of langRefreshers) r();
     if (!panel.classList.contains('hidden')) renderRoster();
     callbacks.settingChanged('language', langSelect.value); // 天気・季節の引き直し+保存
   });

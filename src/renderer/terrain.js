@@ -51,6 +51,13 @@ export function generateWorld(cols, rows, maxHeight, params = null) {
     }
   }
 
+  // 水が多すぎて陸が無いと住民が住めない。最低限の陸を必ず残す(ことばで世界生成の保険)
+  if (world.columnsWhere((c, r) => world.isWalkable(c, r)).length === 0) {
+    for (const [c, r] of world.columns()) {
+      if (world.topType(c, r) === 'water') world.replaceTop(c, r, 'sand');
+    }
+  }
+
   // 最初の木と花(密度は params で調整)
   const grassColumns = [...world.columns()].filter(([c, r]) => world.topType(c, r) === 'grass');
   shuffle(grassColumns);

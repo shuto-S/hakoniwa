@@ -66,6 +66,33 @@ test('1日の上限を超えたら生成しない/翌日リセット', async () 
   assert.equal(await c.generate({ prompt: '4' }), 'hi');
 });
 
+test('並行呼び出しでも最小間隔をすり抜けない(レート枠を同期確保)', async () => {
+  let now = 1_000_000;
+  // hasKey に非同期の間(await)を作って TOCTOU を再現しやすくする
+  const backend = {
+    calls: [],
+    hasKey: async () => {
+      await Promise.resolve();
+      return true;
+    },
+    generate: async (opts) => {
+      backend.calls.push(opts);
+      return { ok: true, text: 'hi' };
+    },
+  };
+  const c = new AiClient(enabled, backend, { now: () => now, limits: { maxPerDay: 100, minIntervalMs: 5000 } });
+  // 同フレームで3件を同時に発火(await しない)
+  const [a, b, d] = await Promise.all([
+    c.generate({ prompt: '1' }),
+    c.generate({ prompt: '2' }),
+    c.generate({ prompt: '3' }),
+  ]);
+  // 最初の1件だけ通り、残りは最小間隔で弾かれる
+  const passed = [a, b, d].filter((x) => x !== null).length;
+  assert.equal(passed, 1);
+  assert.equal(backend.calls.length, 1);
+});
+
 test('プール: fill/take/size と空のときの null', () => {
   const c = new AiClient(enabled, makeBackend());
   assert.equal(c.take('mutter'), null);

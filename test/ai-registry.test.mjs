@@ -72,7 +72,14 @@ test('observeWorld: 近傍ブロックを汎用に列挙し、新ブロックも
   const world = new World(9, 9, 8);
   for (const [c, r] of world.columns()) world.placeTop(c, r, 'grass');
   world.placeTop(4, 4, 'farm'); // 中央を畑に
-  const char = { name: 'そら', type: 'villager', job: 'farmer', trait: { key: 'lively' }, col: 4, row: 4 };
+  const char = {
+    name: 'そら',
+    type: 'villager',
+    job: 'farmer',
+    trait: { key: 'lively' },
+    col: 4,
+    row: 4,
+  };
   const obs = observeWorld(world, char, {
     weather: 'sunny',
     season: 'spring',

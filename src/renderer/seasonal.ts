@@ -64,7 +64,13 @@ export class SeasonalEvents {
   sparkleData: SparkleDatum[];
   sparkles: THREE.Points;
 
-  constructor(scene: THREE.Scene, world: World, weather: WeatherSystem, daynight: DayNight, settings: Settings) {
+  constructor(
+    scene: THREE.Scene,
+    world: World,
+    weather: WeatherSystem,
+    daynight: DayNight,
+    settings: Settings,
+  ) {
     this.scene = scene;
     this.weather = weather;
     this.daynight = daynight;
@@ -112,7 +118,7 @@ export class SeasonalEvents {
         transparent: true,
         opacity: 0,
         depthWrite: false,
-      })
+      }),
     );
     this.moon.scale.setScalar(2.4);
     this.moon.position.set(this.span * 0.32, this.skyY + 2.6, -this.span * 0.4);
@@ -146,9 +152,13 @@ export class SeasonalEvents {
           depthWrite: false,
           side: THREE.DoubleSide,
           blending: THREE.AdditiveBlending,
-        })
+        }),
       );
-      ribbon.position.set((i - 0.5) * this.span * 0.2, this.skyY + 2.2 + i * 0.9, -this.span * 0.45);
+      ribbon.position.set(
+        (i - 0.5) * this.span * 0.2,
+        this.skyY + 2.2 + i * 0.9,
+        -this.span * 0.45,
+      );
       ribbon.rotation.z = (i - 0.5) * 0.12;
       this.auroraRibbons.push(ribbon);
       this.group.add(ribbon);
@@ -191,7 +201,7 @@ export class SeasonalEvents {
           transparent: true,
           opacity: 0,
           depthWrite: false,
-        })
+        }),
       );
       mist.rotation.x = -Math.PI / 2;
       mist.position.y = 0.55 + i * 0.5;
@@ -206,7 +216,8 @@ export class SeasonalEvents {
     const active = dawn && this.calm && (season === 'spring' || season === 'autumn');
     this.mistLayers.forEach((mist, i) => {
       const material = mist.material as THREE.Material;
-      material.opacity += ((active ? 0.13 - i * 0.04 : 0) - material.opacity) * Math.min(1, dt * 0.5);
+      material.opacity +=
+        ((active ? 0.13 - i * 0.04 : 0) - material.opacity) * Math.min(1, dt * 0.5);
       mist.visible = material.opacity > 0.01;
       if (mist.visible) {
         mist.position.x = Math.sin(this.time * 0.1 + i * 3) * 0.5;
@@ -241,7 +252,7 @@ export class SeasonalEvents {
         opacity: 0,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-      })
+      }),
     );
     this.sparkles.visible = false;
     this.sparkles.frustumCulled = false;

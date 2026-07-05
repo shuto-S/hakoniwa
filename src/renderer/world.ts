@@ -1,8 +1,22 @@
 import { BLOCK_TYPES, HEX_RADIUS, HEX_WIDTH, BLOCK_HEIGHT } from './config.ts';
 
 // odd-r オフセット座標(尖った頂点が上下方向の六角形、奇数行が右にずれる)
-const NEIGHBORS_EVEN: Array<[number, number]> = [[1, 0], [0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1]];
-const NEIGHBORS_ODD: Array<[number, number]> = [[1, 0], [1, -1], [0, -1], [-1, 0], [0, 1], [1, 1]];
+const NEIGHBORS_EVEN: Array<[number, number]> = [
+  [1, 0],
+  [0, -1],
+  [-1, -1],
+  [-1, 0],
+  [-1, 1],
+  [0, 1],
+];
+const NEIGHBORS_ODD: Array<[number, number]> = [
+  [1, 0],
+  [1, -1],
+  [0, -1],
+  [-1, 0],
+  [0, 1],
+  [1, 1],
+];
 
 // マスのブロック種(config の BLOCK_TYPES のキー)。空中は null。
 export type BlockType = string;
@@ -192,7 +206,7 @@ export class World {
     return this.columnsWhere((c, r) => {
       if (this.topType(c, r) !== 'wood') return false;
       const walls = this.neighbors(c, r).filter(([nc, nr]) =>
-        this.stackAt(nc, nr).includes('brick')
+        this.stackAt(nc, nr).includes('brick'),
       );
       return walls.length >= 4;
     });

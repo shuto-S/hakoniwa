@@ -12,9 +12,19 @@
     "watch": "esbuild src/renderer/main.ts --bundle --outfile=dist/renderer.js --watch",
     "typecheck": "tsc --noEmit",
     "start": "npm run build && electron .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "node --test test/*.test.mjs",
-    "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/tsconfig\\.json$\" --ignore=\"^/eslint\\.config\\.js$\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\""
+    "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/tsconfig\\.json$\" --ignore=\"^/eslint\\.config\\.js$\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,mjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{js,json,html,css}": "prettier --write"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
@@ -30,6 +40,9 @@
     "eslint": "^9.39.4",
     "gifenc": "^1.0.3",
     "globals": "^17.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1"
   },

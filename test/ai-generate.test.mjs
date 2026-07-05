@@ -30,7 +30,13 @@ const noLimit = { limits: { maxPerDay: 1e9, minIntervalMs: 0 } };
 test('generateMutter: モック応答を整形して返す(引用符・改行を除去)', async () => {
   const backend = mockBackend('「いい天気だなあ」\n(余計な行)');
   const c = new AiClient(enabled, backend, noLimit);
-  const line = await generateMutter(c, { season: 'spring', weather: 'sunny', timeOfDay: 'day', name: 'ゆず', lang: 'ja' });
+  const line = await generateMutter(c, {
+    season: 'spring',
+    weather: 'sunny',
+    timeOfDay: 'day',
+    name: 'ゆず',
+    lang: 'ja',
+  });
   assert.equal(line, 'いい天気だなあ');
   // プロンプトに文脈が乗っているか
   assert.match(backend.calls[0].prompt, /ゆず/);
@@ -70,7 +76,11 @@ test('generateChronicle: できごとが空なら生成せず null', async () =>
 test('generateChronicle: できごとを渡すと要約が返り、プロンプトに含まれる', async () => {
   const backend = mockBackend('📖 家がたって、雨がふった一日');
   const c = new AiClient(enabled, backend, noLimit);
-  const line = await generateChronicle(c, ['🏠 家がたった', '🌧 あめ'], { day: 3, season: 'summer', lang: 'ja' });
+  const line = await generateChronicle(c, ['🏠 家がたった', '🌧 あめ'], {
+    day: 3,
+    season: 'summer',
+    lang: 'ja',
+  });
   assert.equal(line, '📖 家がたって、雨がふった一日');
   assert.match(backend.calls[0].prompt, /家がたった/);
   assert.match(backend.calls[0].prompt, /Day 3/);
@@ -96,7 +106,16 @@ test('refillNamePool: 壊れた応答なら空(プールは増えない)', async
 test('AI無効なら生成関数はすべて null / 空(モックは呼ばれない)', async () => {
   const backend = mockBackend('should not be used');
   const c = new AiClient({ ...enabled, aiEnabled: false }, backend, noLimit);
-  assert.equal(await generateMutter(c, { season: 'spring', weather: 'sunny', timeOfDay: 'day', name: 'x', lang: 'ja' }), null);
+  assert.equal(
+    await generateMutter(c, {
+      season: 'spring',
+      weather: 'sunny',
+      timeOfDay: 'day',
+      name: 'x',
+      lang: 'ja',
+    }),
+    null,
+  );
   assert.equal(await generatePoem(c, 'whale', { season: 'spring', lang: 'ja' }), null);
   assert.equal(await generateChronicle(c, ['a'], { day: 1, season: 'spring', lang: 'ja' }), null);
   assert.deepEqual(await refillNamePool(c, 'villager', { season: 'spring', lang: 'ja' }), []);
@@ -105,6 +124,15 @@ test('AI無効なら生成関数はすべて null / 空(モックは呼ばれな
 
 test('生成失敗(ok:false)でも null / 空でフォールバック', async () => {
   const c = new AiClient(enabled, mockBackend(null), noLimit); // 常に失敗
-  assert.equal(await generateMutter(c, { season: 'spring', weather: 'sunny', timeOfDay: 'day', name: 'x', lang: 'ja' }), null);
+  assert.equal(
+    await generateMutter(c, {
+      season: 'spring',
+      weather: 'sunny',
+      timeOfDay: 'day',
+      name: 'x',
+      lang: 'ja',
+    }),
+    null,
+  );
   assert.deepEqual(await refillNamePool(c, 'villager', { season: 'spring', lang: 'ja' }), []);
 });

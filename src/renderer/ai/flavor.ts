@@ -117,7 +117,13 @@ export function chronicleRequest(events: string[], ctx: ChronicleCtx) {
 
 // 名前プールの補充: 種類ごとに、季節にちなんだ名前を数個 JSON 配列で。
 export function namesRequest(type: string, ctx: NamesCtx) {
-  const kindWord = ({ villager: 'villagers (people)', sheep: 'sheep', chicken: 'chickens' } as Record<string, string>)[type] || type;
+  const kindWord =
+    (
+      { villager: 'villagers (people)', sheep: 'sheep', chicken: 'chickens' } as Record<
+        string,
+        string
+      >
+    )[type] || type;
   const script = ctx.lang === 'en' ? 'short romanized names' : 'short cute Japanese names (kana)';
   const system =
     `You name characters for a cozy garden game. ` +
@@ -161,7 +167,9 @@ export function parseNameList(text: string | null | undefined): string[] {
   if (!text) return [];
   try {
     const v = JSON.parse(text);
-    return Array.isArray(v) ? v.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim()) : [];
+    return Array.isArray(v)
+      ? v.filter((s) => typeof s === 'string' && s.trim()).map((s) => s.trim())
+      : [];
   } catch {
     return [];
   }
@@ -171,7 +179,10 @@ export function parseNameList(text: string | null | undefined): string[] {
 export function cleanLine(text: string | null | undefined, maxLen = 28): string | null {
   if (!text) return null;
   let s = String(text).trim().split('\n')[0].trim();
-  s = s.replace(/^["'“”「」『』]+/, '').replace(/["'“”「」『』]+$/, '').trim();
+  s = s
+    .replace(/^["'“”「」『』]+/, '')
+    .replace(/["'“”「」『』]+$/, '')
+    .trim();
   if (!s) return null;
   if (s.length > maxLen) s = s.slice(0, maxLen).trim() + '…';
   return s;

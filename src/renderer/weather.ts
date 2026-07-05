@@ -89,7 +89,7 @@ export class WeatherSystem {
     view: SceneView,
     world: World,
     settings: Settings,
-    onChange: (state: WeatherState, kind: WeatherKind) => void
+    onChange: (state: WeatherState, kind: WeatherKind) => void,
   ) {
     this.view = view;
     this.settings = settings;
@@ -149,7 +149,7 @@ export class WeatherSystem {
       });
       const arc = new THREE.Mesh(
         new THREE.TorusGeometry(this.span * 0.4 + i * 0.08, 0.045, 6, 48, Math.PI),
-        material
+        material,
       );
       this.rainbowMats.push(material);
       this.rainbow.add(arc);
@@ -174,7 +174,7 @@ export class WeatherSystem {
       for (let p = 0; p < puffs; p++) {
         const puff = new THREE.Mesh(
           new THREE.IcosahedronGeometry(0.45 + Math.random() * 0.5, 0),
-          this.cloudMaterial
+          this.cloudMaterial,
         );
         puff.position.set((p - puffs / 2) * 0.6, Math.random() * 0.2, (Math.random() - 0.5) * 0.5);
         puff.scale.y = 0.55;
@@ -183,7 +183,7 @@ export class WeatherSystem {
       cloud.position.set(
         (Math.random() - 0.5) * this.span,
         this.skyY + Math.random() * 1.2,
-        (Math.random() - 0.5) * this.span * 0.8
+        (Math.random() - 0.5) * this.span * 0.8,
       );
       cloud.userData.speed = 0.12 + Math.random() * 0.15;
       this.clouds.push(cloud);
@@ -206,7 +206,7 @@ export class WeatherSystem {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     this.rain = new THREE.LineSegments(
       geometry,
-      new THREE.LineBasicMaterial({ color: 0x9dbce8, transparent: true, opacity: 0.55 })
+      new THREE.LineBasicMaterial({ color: 0x9dbce8, transparent: true, opacity: 0.55 }),
     );
     this.rain.visible = false;
     this.rain.frustumCulled = false;
@@ -235,7 +235,7 @@ export class WeatherSystem {
         sizeAttenuation: false,
         transparent: true,
         opacity: 0.9,
-      })
+      }),
     );
     this.snow.visible = false;
     this.snow.frustumCulled = false;
@@ -308,8 +308,7 @@ export class WeatherSystem {
       this.rainbowLife -= dt;
       // ふわっと現れて、最後の8秒でゆっくり消える
       target =
-        0.2 *
-        Math.min(1, (RAINBOW_LIFE - this.rainbowLife) / 2, Math.max(0, this.rainbowLife) / 8);
+        0.2 * Math.min(1, (RAINBOW_LIFE - this.rainbowLife) / 2, Math.max(0, this.rainbowLife) / 8);
     }
     for (const material of this.rainbowMats) {
       material.opacity += (target - material.opacity) * Math.min(1, dt * 2);
@@ -349,7 +348,7 @@ export class WeatherSystem {
     const spots = this.world.columnsWhere(
       (c: number, r: number) =>
         PUDDLE_TOPS.has(this.world.topType(c, r) ?? '') &&
-        !this.puddles.some((p) => p.col === c && p.row === r)
+        !this.puddles.some((p) => p.col === c && p.row === r),
     );
     if (spots.length === 0) return;
     const [col, row] = spots[Math.floor(Math.random() * spots.length)];

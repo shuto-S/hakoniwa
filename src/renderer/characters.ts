@@ -62,9 +62,18 @@ const JOBS = ['lumberjack', 'farmer', 'fisher', 'villager'];
 
 // 旧セーブ(日本語ラベル)を新しいキーに読み替える
 const LEGACY_TRAIT = {
-  のんびり: 'relaxed', せっかち: 'hasty', げんき: 'lively', まいぺーす: 'mypace', おくびょう: 'timid',
+  のんびり: 'relaxed',
+  せっかち: 'hasty',
+  げんき: 'lively',
+  まいぺーす: 'mypace',
+  おくびょう: 'timid',
 };
-const LEGACY_JOB = { きこり: 'lumberjack', のうふ: 'farmer', つりびと: 'fisher', むらびと: 'villager' };
+const LEGACY_JOB = {
+  きこり: 'lumberjack',
+  のうふ: 'farmer',
+  つりびと: 'fisher',
+  むらびと: 'villager',
+};
 
 const BABY_SCALE = 0.55;
 const GROW_TIME = 240; // 子どもがおとなになるまで(秒)
@@ -77,7 +86,12 @@ const ANIMAL_FESTIVAL_CHANCE = 0.2; // まれに動物もおまつりに参加�
 const TRAVELER_FESTIVAL_CHANCE = 0.5; // 旅人はそこそこの確率で祭りに混ざる
 
 const MOVE_DURATION = {
-  villager: 0.55, sheep: 0.7, chicken: 0.45, traveler: 0.5, deer: 0.42, cat: 0.5,
+  villager: 0.55,
+  sheep: 0.7,
+  chicken: 0.45,
+  traveler: 0.5,
+  deer: 0.42,
+  cat: 0.5,
 };
 const VISITOR_TYPES = new Set(['traveler', 'deer', 'cat']);
 
@@ -151,7 +165,7 @@ function speechSprite(text: string) {
 
   const texture = new THREE.CanvasTexture(canvas);
   const sprite = new THREE.Sprite(
-    new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false })
+    new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false }),
   );
   // アスペクト比を保ってワールド単位に。高さ 0.28 くらい
   const worldH = 0.28;
@@ -192,7 +206,7 @@ class Character {
     row: number,
     world: World,
     scaleBase: number,
-    opts: CharacterOpts = {}
+    opts: CharacterOpts = {},
   ) {
     this.type = type;
     this.col = col;
@@ -247,7 +261,8 @@ class Character {
       // 向き合ってぴょこぴょこ
       this.progress += (dt * speed) / 1.6;
       const ground = world.topSurfaceY(this.col, this.row);
-      this.mesh.position.y = ground + Math.abs(Math.sin(Math.min(1, this.progress) * Math.PI * 2)) * 0.1;
+      this.mesh.position.y =
+        ground + Math.abs(Math.sin(Math.min(1, this.progress) * Math.PI * 2)) * 0.1;
       if (this.progress >= 1) {
         this.state = 'idle';
         this.idleTimer = (0.8 + Math.random()) * this.trait.idle;
@@ -382,7 +397,11 @@ class Character {
 
   startWalk(world: World, target: number[] | null = null) {
     // ひつじは足元の草をたまに食べる
-    if (this.type === 'sheep' && world.topType(this.col, this.row) === 'grass' && Math.random() < 0.2) {
+    if (
+      this.type === 'sheep' &&
+      world.topType(this.col, this.row) === 'grass' &&
+      Math.random() < 0.2
+    ) {
       this.state = 'eating';
       this.progress = 0;
       return;
@@ -402,9 +421,10 @@ class Character {
       options.sort(
         (a, b) =>
           world.distance(a[0], a[1], target[0], target[1]) -
-          world.distance(b[0], b[1], target[0], target[1])
+          world.distance(b[0], b[1], target[0], target[1]),
       );
-      choice = Math.random() < 0.8 ? options[0] : options[Math.floor(Math.random() * options.length)];
+      choice =
+        Math.random() < 0.8 ? options[0] : options[Math.floor(Math.random() * options.length)];
     } else {
       choice = options[Math.floor(Math.random() * options.length)];
     }
@@ -488,7 +508,7 @@ export class CharacterManager {
       walkable.sort(
         (a, b) =>
           this.world.distance(c.col, c.row, a[0], a[1]) -
-          this.world.distance(c.col, c.row, b[0], b[1])
+          this.world.distance(c.col, c.row, b[0], b[1]),
       );
       [c.col, c.row] = walkable[0];
       const p = this.world.positionOf(c.col, c.row);
@@ -544,7 +564,14 @@ export class CharacterManager {
       job: opts.job || (type === 'villager' ? this.pickJob() : null),
       trait: opts.trait || TRAITS[Math.floor(Math.random() * TRAITS.length)],
     };
-    const character = new Character(type, col, row, this.world, this.settings.characterScale, filled);
+    const character = new Character(
+      type,
+      col,
+      row,
+      this.world,
+      this.settings.characterScale,
+      filled,
+    );
     this.characters.push(character);
     this.scene.add(character.mesh);
     return character;
@@ -559,7 +586,7 @@ export class CharacterManager {
     const edges = this.world.columnsWhere(
       (c, r) =>
         (c === 0 || r === 0 || c === this.world.cols - 1 || r === this.world.rows - 1) &&
-        this.world.isWalkable(c, r)
+        this.world.isWalkable(c, r),
     );
     if (edges.length === 0) return null;
     const [col, row] = edges[Math.floor(Math.random() * edges.length)];
@@ -605,11 +632,7 @@ export class CharacterManager {
         }
       }
       if (this.onEvent) {
-        this.onEvent(
-          animalsJoin
-            ? t('event.festivalAnimals')
-            : t('event.festival')
-        );
+        this.onEvent(animalsJoin ? t('event.festivalAnimals') : t('event.festival'));
       }
       return;
     }
@@ -620,7 +643,7 @@ export class CharacterManager {
         this.world.distance(c.col, c.row, s[0], s[1]) <
         this.world.distance(c.col, c.row, best[0], best[1])
           ? s
-          : best
+          : best,
       );
     }
   }
@@ -725,7 +748,7 @@ export class CharacterManager {
           .columnsWhere((c, r) => this.world.isWalkable(c, r))
           .sort(
             (a, b) =>
-              this.world.distance(hc, hr, a[0], a[1]) - this.world.distance(hc, hr, b[0], b[1])
+              this.world.distance(hc, hr, a[0], a[1]) - this.world.distance(hc, hr, b[0], b[1]),
           )[0];
         if (!near) continue; // 歩けるマスが無ければ、かえさず消す
         [hc, hr] = near;
@@ -749,7 +772,7 @@ export class CharacterManager {
     this.onEvent(
       variant === 'black'
         ? t('event.lambBlack', { name: lamb.name })
-        : t('event.lamb', { name: lamb.name })
+        : t('event.lamb', { name: lamb.name }),
     );
   }
 
@@ -771,7 +794,7 @@ export class CharacterManager {
       bubble.sprite.position.set(
         char.mesh.position.x,
         char.mesh.position.y + 0.62 * char.mesh.scale.y + 0.2,
-        char.mesh.position.z
+        char.mesh.position.z,
       );
     }
 
@@ -798,7 +821,10 @@ export class CharacterManager {
   }
 
   startGreeting(a: Character, b: Character) {
-    for (const [me, other] of [[a, b], [b, a]]) {
+    for (const [me, other] of [
+      [a, b],
+      [b, a],
+    ]) {
       const p = this.world.positionOf(other.col, other.row);
       me.mesh.rotation.y = Math.atan2(p.x - me.mesh.position.x, p.z - me.mesh.position.z);
       if (me.type === 'cat') continue; // ねこは振り向くだけ
@@ -868,13 +894,7 @@ export class CharacterManager {
         c.task = null;
       }
       c.jobCooldown -= dt;
-      if (
-        !isNight &&
-        !this.festivalActive &&
-        !c.task &&
-        c.state === 'idle' &&
-        c.jobCooldown <= 0
-      ) {
+      if (!isNight && !this.festivalActive && !c.task && c.state === 'idle' && c.jobCooldown <= 0) {
         this.assignTask(c);
       }
     }
@@ -891,7 +911,7 @@ export class CharacterManager {
       trunks.sort(
         (a, b) =>
           this.world.distance(c.col, c.row, a[0], a[1]) -
-          this.world.distance(c.col, c.row, b[0], b[1])
+          this.world.distance(c.col, c.row, b[0], b[1]),
       );
       c.task = { kind: 'chop', target: trunks[0] };
       return;
@@ -904,8 +924,7 @@ export class CharacterManager {
         return;
       }
       const empty = this.world.columnsWhere(
-        (tc, tr) =>
-          this.world.topType(tc, tr) === 'farm' && !this.world.crops.has(`${tc},${tr}`)
+        (tc, tr) => this.world.topType(tc, tr) === 'farm' && !this.world.crops.has(`${tc},${tr}`),
       );
       if (empty.length > 0) {
         c.task = { kind: 'plantCrop', target: empty[Math.floor(Math.random() * empty.length)] };
@@ -919,8 +938,8 @@ export class CharacterManager {
           this.world.columnsWhere(
             (tc, tr) =>
               this.world.topType(tc, tr) === 'grass' &&
-              huts.some(([hc, hr]) => this.world.distance(tc, tr, hc, hr) <= 2)
-          )
+              huts.some(([hc, hr]) => this.world.distance(tc, tr, hc, hr) <= 2),
+          ),
         );
         if (spots.length > 0) {
           c.task = { kind: 'plantFarm', target: spots[0] };
@@ -935,10 +954,8 @@ export class CharacterManager {
         this.world.columnsWhere(
           (tc, tr) =>
             this.world.isWalkable(tc, tr) &&
-            this.world
-              .neighbors(tc, tr)
-              .some(([nc, nr]) => this.world.topType(nc, nr) === 'water')
-        )
+            this.world.neighbors(tc, tr).some(([nc, nr]) => this.world.topType(nc, nr) === 'water'),
+        ),
       );
       if (spots.length === 0) {
         c.jobCooldown = 90;
@@ -965,7 +982,7 @@ export class CharacterManager {
           y: b.y,
           type: null,
           expect: b.type,
-        }))
+        })),
       );
       // 近くの草地に苗を植える
       const spots = shuffle(
@@ -975,8 +992,8 @@ export class CharacterManager {
             this.world.distance(sc, sr, tc, tr) <= 3 &&
             this.world
               .neighbors(sc, sr)
-              .every(([nc, nr]) => !this.world.stackAt(nc, nr).includes('wood'))
-        )
+              .every(([nc, nr]) => !this.world.stackAt(nc, nr).includes('wood')),
+        ),
       );
       for (const [sc, sr] of spots) {
         const plan = treePlan(this.world, sc, sr);
@@ -1037,7 +1054,14 @@ export class CharacterManager {
 
   // 設定パネルの「なかま」一覧
   roster() {
-    const emoji = { villager: '🧑', sheep: '🐑', chicken: '🐔', traveler: '🚶', deer: '🦌', cat: '🐈' };
+    const emoji = {
+      villager: '🧑',
+      sheep: '🐑',
+      chicken: '🐔',
+      traveler: '🚶',
+      deer: '🦌',
+      cat: '🐈',
+    };
     return this.characters.map((c) => {
       const tags: string[] = [];
       if (c.baby) tags.push(t('tag.baby'));

@@ -12,8 +12,13 @@ import {
 
 test('mutterRequest: 文脈を含み、言語指定が入る', () => {
   const req = mutterRequest({
-    season: 'spring', weather: 'rain', timeOfDay: 'day',
-    name: 'ゆず', job: 'farmer', trait: 'lively', lang: 'ja',
+    season: 'spring',
+    weather: 'rain',
+    timeOfDay: 'day',
+    name: 'ゆず',
+    job: 'farmer',
+    trait: 'lively',
+    lang: 'ja',
   });
   assert.match(req.system, /Japanese/);
   assert.match(req.prompt, /spring/);
@@ -24,7 +29,13 @@ test('mutterRequest: 文脈を含み、言語指定が入る', () => {
 });
 
 test('mutterRequest: 英語指定', () => {
-  const req = mutterRequest({ season: 'winter', weather: 'snow', timeOfDay: 'night', name: 'Sora', lang: 'en' });
+  const req = mutterRequest({
+    season: 'winter',
+    weather: 'snow',
+    timeOfDay: 'night',
+    name: 'Sora',
+    lang: 'en',
+  });
   assert.match(req.system, /English/);
 });
 
@@ -44,7 +55,11 @@ test('taleRequest: 言語指定', () => {
 });
 
 test('chronicleRequest: できごとを渡し要約を頼む', () => {
-  const r = chronicleRequest(['🏠 家がたった', '🌧 あめになった'], { day: 3, season: 'summer', lang: 'ja' });
+  const r = chronicleRequest(['🏠 家がたった', '🌧 あめになった'], {
+    day: 3,
+    season: 'summer',
+    lang: 'ja',
+  });
   assert.match(r.prompt, /家がたった/);
   assert.match(r.prompt, /Day 3/);
   assert.ok(r.maxOutputTokens > 0);

@@ -16,7 +16,7 @@ export const LOCALES = [
 ];
 
 const DICTS: Record<string, LocaleDict> = Object.fromEntries(
-  LOCALES.map((l): [string, LocaleDict] => [l.code, l.dict])
+  LOCALES.map((l): [string, LocaleDict] => [l.code, l.dict]),
 );
 const FALLBACK = 'ja';
 

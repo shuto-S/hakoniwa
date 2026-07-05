@@ -1,10 +1,5 @@
 import * as THREE from 'three';
-import {
-  BLOCK_TYPES,
-  FLOWER_COLORS,
-  HEX_RADIUS,
-  BLOCK_HEIGHT,
-} from './config.ts';
+import { BLOCK_TYPES, FLOWER_COLORS, HEX_RADIUS, BLOCK_HEIGHT } from './config.ts';
 import type { World } from './world.ts';
 
 const ELEVATION = THREE.MathUtils.degToRad(38); // 斜め上視点の仰角
@@ -109,7 +104,7 @@ export class SceneView {
     // デスクトップの上に影だけ落とす床
     this.shadowPlane = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
-      new THREE.ShadowMaterial({ opacity: 0.28 })
+      new THREE.ShadowMaterial({ opacity: 0.28 }),
     );
     this.shadowPlane.rotation.x = -Math.PI / 2;
     this.shadowPlane.position.y = -0.01;
@@ -130,7 +125,7 @@ export class SceneView {
       HEX_RADIUS * radiusScale,
       HEX_RADIUS * radiusScale,
       height,
-      6
+      6,
     );
   }
 
@@ -145,7 +140,7 @@ export class SceneView {
     this.solidMesh = new THREE.InstancedMesh(
       this.hexGeometry(0.985, BLOCK_HEIGHT),
       solidMaterial,
-      capacity
+      capacity,
     );
     this.solidMesh.castShadow = true;
     this.solidMesh.receiveShadow = true;
@@ -162,7 +157,7 @@ export class SceneView {
     this.waterMesh = new THREE.InstancedMesh(
       this.hexGeometry(0.985, BLOCK_HEIGHT * 0.82),
       waterMaterial,
-      capacity
+      capacity,
     );
 
     // 花とたきびは数が少ないので、インスタンシングせず細かいモデルを組む
@@ -179,7 +174,7 @@ export class SceneView {
       this.waterMesh,
       this.flowerGroup,
       this.campfireGroup,
-      this.hutLightGroup
+      this.hutLightGroup,
     );
     // instanceId → マス の対応表(クリック判定用)
     this.solidInfo = [];
@@ -238,7 +233,11 @@ export class SceneView {
     const d = this.decor;
     const group = new THREE.Group();
     const offsets = [
-      [0, 0], [0.13, 0.08], [-0.12, 0.1], [0.08, -0.13], [-0.09, -0.11],
+      [0, 0],
+      [0.13, 0.08],
+      [-0.12, 0.1],
+      [0.08, -0.13],
+      [-0.09, -0.11],
     ];
     const count = stage === 0 ? 3 : 5;
     for (let i = 0; i < count; i++) {
@@ -352,7 +351,7 @@ export class SceneView {
   buildGhost() {
     this.ghost = new THREE.Mesh(
       this.hexGeometry(1.0, BLOCK_HEIGHT),
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.45, depthWrite: false })
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.45, depthWrite: false }),
     );
     this.ghost.visible = false;
     this.scene.add(this.ghost);
@@ -365,7 +364,7 @@ export class SceneView {
       this.waterMesh,
       this.flowerGroup,
       this.campfireGroup,
-      this.hutLightGroup
+      this.hutLightGroup,
     );
     for (const mesh of [this.solidMesh, this.waterMesh]) {
       mesh.dispose(); // インスタンス属性
@@ -424,9 +423,7 @@ export class SceneView {
       const [col, row] = key.split(',').map(Number);
       const { x, z } = this.world.positionOf(col, row);
       const colorIndex = (col * 7 + row * 13) % FLOWER_COLORS.length;
-      this.flowerGroup.add(
-        this.makeFlower(x, this.world.topSurfaceY(col, row), z, colorIndex)
-      );
+      this.flowerGroup.add(this.makeFlower(x, this.world.topSurfaceY(col, row), z, colorIndex));
     }
 
     // 作物を立て直す(花と同じグループに)
@@ -529,14 +526,15 @@ export class SceneView {
       const innerFlicker = 1 + Math.sin(t * 11 + cf.phase + 1.3) * 0.18;
       cf.inner.scale.set(innerFlicker, 1 + Math.sin(t * 8 + cf.phase + 0.7) * 0.15, innerFlicker);
       if (cf.light) {
-        cf.light.intensity = 3.5 * (0.85 + 0.12 * Math.sin(t * 11 + cf.phase) + 0.06 * Math.sin(t * 23));
+        cf.light.intensity =
+          3.5 * (0.85 + 0.12 * Math.sin(t * 11 + cf.phase) + 0.06 * Math.sin(t * 23));
       }
       cf.smokes.forEach((smoke, j) => {
         const cycle = (t * 0.3 + j / 3 + cf.phase * 0.1) % 1;
         smoke.position.set(
           Math.sin(t * 0.8 + j * 2.1) * 0.06,
           0.5 + cycle * 0.95,
-          Math.cos(t * 0.7 + j * 1.4) * 0.06
+          Math.cos(t * 0.7 + j * 1.4) * 0.06,
         );
         smoke.scale.setScalar(0.6 + cycle * 1.3);
         smoke.material.opacity = 0.3 * Math.sin(cycle * Math.PI); // ふわっと出てふわっと消える
@@ -552,7 +550,7 @@ export class SceneView {
     this.camera.position.set(
       Math.sin(this.azimuth) * Math.cos(ELEVATION) * CAMERA_DISTANCE,
       Math.sin(ELEVATION) * CAMERA_DISTANCE + lookY,
-      Math.cos(this.azimuth) * Math.cos(ELEVATION) * CAMERA_DISTANCE
+      Math.cos(this.azimuth) * Math.cos(ELEVATION) * CAMERA_DISTANCE,
     );
     this.camera.lookAt(0, lookY, 0);
     this.camera.zoom += (this.zoom - this.camera.zoom) * Math.min(1, dt * 10);
@@ -603,13 +601,13 @@ export class SceneView {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(
       ((clientX - rect.left) / rect.width) * 2 - 1,
-      -((clientY - rect.top) / rect.height) * 2 + 1
+      -((clientY - rect.top) / rect.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(ndc, this.camera);
 
     const hits = this.raycaster.intersectObjects(
       [this.solidMesh, this.waterMesh, this.shadowPlane],
-      false
+      false,
     );
     for (const hit of hits) {
       if (hit.object === this.solidMesh) return { ...this.solidInfo[hit.instanceId!] };

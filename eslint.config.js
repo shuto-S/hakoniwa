@@ -12,11 +12,17 @@ const globals = require('globals');
 const tsGuardRules = {
   'no-undef': 'off', // 型・グローバルの解決は tsc に任せる(base だと誤検知する)
   'no-unused-vars': 'off',
-  '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+  '@typescript-eslint/no-unused-vars': [
+    'warn',
+    { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+  ],
   'no-shadow': 'off',
   '@typescript-eslint/no-shadow': 'error',
   'no-use-before-define': 'off',
-  '@typescript-eslint/no-use-before-define': ['error', { functions: false, classes: false, variables: true }],
+  '@typescript-eslint/no-use-before-define': [
+    'error',
+    { functions: false, classes: false, variables: true },
+  ],
 };
 
 // 素の JS(スクリプト・テスト・この設定ファイル)用
@@ -68,5 +74,5 @@ module.exports = tseslint.config(
     files: ['scripts/**/*.js', 'eslint.config.js'],
     languageOptions: { ecmaVersion: 2022, sourceType: 'commonjs', globals: { ...globals.node } },
     rules: jsGuardRules,
-  }
+  },
 );

@@ -25,9 +25,7 @@ test('水は下に落ちる', () => {
   const sim = new WaterSim(world);
   sim.step();
   // 水位より低い隣へ流れている
-  const spread = world
-    .neighbors(4, 4)
-    .filter(([c, r]) => world.topType(c, r) === 'water').length;
+  const spread = world.neighbors(4, 4).filter(([c, r]) => world.topType(c, r) === 'water').length;
   assert.ok(spread > 0, '水が流れていない');
 });
 

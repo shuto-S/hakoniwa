@@ -82,7 +82,10 @@ test('setBlock は null 埋めで宙に浮くブロックを作れる', () => {
 
 test('neighbors: odd-r オフセットが distance=1 と一致する', () => {
   const world = makeWorld(9, 9);
-  for (const [c, r] of [[4, 4], [4, 3]]) {
+  for (const [c, r] of [
+    [4, 4],
+    [4, 3],
+  ]) {
     const neighbors = world.neighbors(c, r);
     assert.equal(neighbors.length, 6, `(${c},${r}) の隣は6マス`);
     for (const [nc, nr] of neighbors) {
@@ -96,7 +99,20 @@ test('neighbors: odd-r オフセットが distance=1 と一致する', () => {
 test('distance は対称で、自分自身は0', () => {
   const world = makeWorld(9, 9);
   assert.equal(world.distance(2, 3, 2, 3), 0);
-  for (const [a, b] of [[[0, 0], [5, 5]], [[1, 4], [6, 2]], [[3, 3], [3, 6]]]) {
+  for (const [a, b] of [
+    [
+      [0, 0],
+      [5, 5],
+    ],
+    [
+      [1, 4],
+      [6, 2],
+    ],
+    [
+      [3, 3],
+      [3, 6],
+    ],
+  ]) {
     assert.equal(world.distance(...a, ...b), world.distance(...b, ...a));
     assert.ok(world.distance(...a, ...b) > 0);
   }

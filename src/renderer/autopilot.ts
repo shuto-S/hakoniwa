@@ -111,9 +111,10 @@ export class Autopilot {
     if (snowy > this.world.cols * this.world.rows * 0.15) return;
     const spots = this.world.columnsWhere((c, r) => {
       const top = this.world.topType(c, r);
-      return (
-        top && top !== 'snow' && top !== 'water' && this.world.heightAt(c, r) < this.world.maxHeight
-      ) as boolean;
+      return (top &&
+        top !== 'snow' &&
+        top !== 'water' &&
+        this.world.heightAt(c, r) < this.world.maxHeight) as boolean;
     });
     if (spots.length === 0) return;
     const [c, r] = spots[Math.floor(Math.random() * spots.length)];
@@ -135,9 +136,7 @@ export class Autopilot {
   spreadGrass(): void {
     const candidates = this.world.columnsWhere((c, r) => {
       if (this.world.topType(c, r) !== 'dirt') return false;
-      return this.world
-        .neighbors(c, r)
-        .some(([nc, nr]) => this.world.topType(nc, nr) === 'grass');
+      return this.world.neighbors(c, r).some(([nc, nr]) => this.world.topType(nc, nr) === 'grass');
     });
     if (candidates.length === 0) return;
     const [c, r] = candidates[Math.floor(Math.random() * candidates.length)];
@@ -162,8 +161,10 @@ export class Autopilot {
     const spots = shuffle(
       this.grassTops().filter(([c, r]) =>
         // まわりに幹がないところに生やす
-        this.world.neighbors(c, r).every(([nc, nr]) => !this.world.stackAt(nc, nr).includes('wood'))
-      )
+        this.world
+          .neighbors(c, r)
+          .every(([nc, nr]) => !this.world.stackAt(nc, nr).includes('wood')),
+      ),
     );
     for (const [c, r] of spots) {
       const plan = treePlan(this.world, c, r);
@@ -179,7 +180,7 @@ export class Autopilot {
       (c, r) =>
         this.world.topType(c, r) === 'stone' &&
         this.world.heightAt(c, r) >= Math.max(4, this.world.maxHeight - 3) &&
-        this.world.heightAt(c, r) < this.world.maxHeight
+        this.world.heightAt(c, r) < this.world.maxHeight,
     );
     if (peaks.length === 0) return;
     const [c, r] = peaks[Math.floor(Math.random() * peaks.length)];

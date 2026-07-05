@@ -1,0 +1,3 @@
+# ステージした変更を整形・lint し、型を検査してからコミット(赤いCIを未然に防ぐ)
+npx lint-staged
+npm run typecheck

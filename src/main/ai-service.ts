@@ -36,7 +36,10 @@ function loadKey(): string | null {
   try {
     const buf = fs.readFileSync(KEY_FILE());
     // 平文フォールバックで保存されたもの
-    if (buf.length >= PLAIN_PREFIX.length && buf.subarray(0, PLAIN_PREFIX.length).equals(PLAIN_PREFIX)) {
+    if (
+      buf.length >= PLAIN_PREFIX.length &&
+      buf.subarray(0, PLAIN_PREFIX.length).equals(PLAIN_PREFIX)
+    ) {
       return buf.subarray(PLAIN_PREFIX.length).toString('utf8') || null;
     }
     if (!safeStorage.isEncryptionAvailable()) return null;
@@ -131,7 +134,10 @@ export async function generate(opts: AiGenerateOptions): Promise<AiGenerateResul
 }
 
 // 接続テスト(ごく短い呼び出し)
-export async function testConnection(opts: { authMode?: AiAuthMode; model?: string }): Promise<AiTestResult> {
+export async function testConnection(opts: {
+  authMode?: AiAuthMode;
+  model?: string;
+}): Promise<AiTestResult> {
   if (!hasKey()) return { ok: false, error: 'no-key' };
   const r = await generate({
     authMode: opts.authMode,

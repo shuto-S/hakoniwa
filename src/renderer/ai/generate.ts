@@ -24,7 +24,10 @@ export async function generateMutter(client: AiClient, ctx: MutterCtx) {
 export async function generatePoem(client: AiClient, kind: string, ctx: PoemCtx) {
   // 一句の題材は #5 のイベント descriptor から引く(直書きしない)
   const desc = describeEvent(kind);
-  return cleanLine(await client.generate(poemRequest({ ...ctx, subject: desc ? desc.subject : undefined })), 40);
+  return cleanLine(
+    await client.generate(poemRequest({ ...ctx, subject: desc ? desc.subject : undefined })),
+    40,
+  );
 }
 
 export async function generateTale(client: AiClient, ctx: TaleCtx) {
@@ -37,7 +40,11 @@ export async function generateChronicle(client: AiClient, events: string[], ctx:
 }
 
 // ことばで世界生成: 指示から地形パラメータを作り、クランプして返す(失敗時は null)
-export async function generateWorldParams(client: AiClient, instruction: string, ctx: { lang: string }) {
+export async function generateWorldParams(
+  client: AiClient,
+  instruction: string,
+  ctx: { lang: string },
+) {
   const paramDocs = Object.entries(WORLDGEN_PARAMS).map(([key, d]) => ({ key, ...d }));
   const text = await client.generate(
     worldgenRequest(instruction, {
@@ -45,7 +52,7 @@ export async function generateWorldParams(client: AiClient, instruction: string,
       blocks: describeBlocks(),
       paramDocs,
       schema: worldgenSchema(),
-    })
+    }),
   );
   const raw = parseParams(text);
   return raw ? clampParams(raw) : null;

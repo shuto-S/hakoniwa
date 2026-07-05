@@ -15,11 +15,11 @@ function part(
   color: number,
   x: number,
   y: number,
-  z: number
+  z: number,
 ): THREE.Mesh {
   const mesh = new THREE.Mesh(
     geometry,
-    new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true })
+    new THREE.MeshStandardMaterial({ color, roughness: 0.85, flatShading: true }),
   );
   mesh.position.set(x, y, z);
   mesh.castShadow = true;
@@ -39,7 +39,13 @@ function makeVillagerMesh(character: Character): THREE.Group {
     group.add(part(new THREE.ConeGeometry(0.19, 0.08, 8), 0xd9c27a, 0, 0.5, 0)); // 麦わら帽子
   } else if (character.job === 'lumberjack') {
     group.add(part(new THREE.CylinderGeometry(0.09, 0.1, 0.05, 6), 0x5a4632, 0, 0.51, 0)); // 帽子
-    const handle = part(new THREE.CylinderGeometry(0.014, 0.014, 0.3, 4), 0x8a6a42, 0.15, 0.24, 0.04);
+    const handle = part(
+      new THREE.CylinderGeometry(0.014, 0.014, 0.3, 4),
+      0x8a6a42,
+      0.15,
+      0.24,
+      0.04,
+    );
     handle.rotation.z = 0.35;
     group.add(handle);
     group.add(part(new THREE.BoxGeometry(0.07, 0.05, 0.02), 0x9a9aa2, 0.2, 0.36, 0.04)); // 斧
@@ -57,7 +63,12 @@ function makeVillagerMesh(character: Character): THREE.Group {
 function makeSheepMesh(character: Character): THREE.Group {
   const wool = character.variant === 'black' ? 0x3c3833 : 0xf2efe6;
   const group = new THREE.Group();
-  for (const [x, z] of [[-0.08, -0.07], [0.08, -0.07], [-0.08, 0.07], [0.08, 0.07]]) {
+  for (const [x, z] of [
+    [-0.08, -0.07],
+    [0.08, -0.07],
+    [-0.08, 0.07],
+    [0.08, 0.07],
+  ]) {
     group.add(part(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 5), 0x4a4040, x, 0.05, z));
   }
   const body = part(new THREE.SphereGeometry(0.15, 8, 6), wool, 0, 0.2, 0);
@@ -74,7 +85,9 @@ function makeChickenMesh(): THREE.Group {
   body.scale.set(0.9, 1, 1.15);
   group.add(body);
   group.add(part(new THREE.SphereGeometry(0.06, 6, 5), 0xfaf7ef, 0, 0.24, 0.06));
-  group.add(part(new THREE.ConeGeometry(0.025, 0.06, 4), 0xe8a33d, 0, 0.24, 0.14).rotateX(Math.PI / 2));
+  group.add(
+    part(new THREE.ConeGeometry(0.025, 0.06, 4), 0xe8a33d, 0, 0.24, 0.14).rotateX(Math.PI / 2),
+  );
   group.add(part(new THREE.BoxGeometry(0.02, 0.05, 0.04), 0xd8453c, 0, 0.31, 0.05));
   return group;
 }
@@ -94,7 +107,12 @@ function makeTravelerMesh(): THREE.Group {
 // しか(低確率の訪問者)
 function makeDeerMesh(): THREE.Group {
   const group = new THREE.Group();
-  for (const [x, z] of [[-0.07, -0.09], [0.07, -0.09], [-0.07, 0.09], [0.07, 0.09]]) {
+  for (const [x, z] of [
+    [-0.07, -0.09],
+    [0.07, -0.09],
+    [-0.07, 0.09],
+    [0.07, 0.09],
+  ]) {
     group.add(part(new THREE.CylinderGeometry(0.02, 0.02, 0.16, 4), 0x7a5236, x, 0.08, z));
   }
   const body = part(new THREE.SphereGeometry(0.13, 8, 6), 0x9a6b42, 0, 0.22, 0);
@@ -106,7 +124,13 @@ function makeDeerMesh(): THREE.Group {
   group.add(part(new THREE.SphereGeometry(0.06, 6, 5), 0x9a6b42, 0, 0.44, 0.18));
   // つの
   for (const side of [-1, 1]) {
-    const antler = part(new THREE.CylinderGeometry(0.008, 0.012, 0.14, 4), 0xd9c8a8, side * 0.04, 0.54, 0.15);
+    const antler = part(
+      new THREE.CylinderGeometry(0.008, 0.012, 0.14, 4),
+      0xd9c8a8,
+      side * 0.04,
+      0.54,
+      0.15,
+    );
     antler.rotation.z = side * 0.5;
     group.add(antler);
   }

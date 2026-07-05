@@ -51,23 +51,31 @@ export interface Season {
 
 export const SEASONS: Season[] = [
   {
-    key: 'spring', emoji: '🌸',
-    leaves: 0x5fbf63, grass: 0x6cc75a,
+    key: 'spring',
+    emoji: '🌸',
+    leaves: 0x5fbf63,
+    grass: 0x6cc75a,
     weights: { sunny: 0.42, cloudy: 0.28, rain: 0.26, snow: 0.04 },
   },
   {
-    key: 'summer', emoji: '🌻',
-    leaves: 0x2f8f3c, grass: 0x58bb4a,
+    key: 'summer',
+    emoji: '🌻',
+    leaves: 0x2f8f3c,
+    grass: 0x58bb4a,
     weights: { sunny: 0.55, cloudy: 0.23, rain: 0.2, snow: 0.02 },
   },
   {
-    key: 'autumn', emoji: '🍁',
-    leaves: 0xd07a2e, grass: 0x9db04e,
+    key: 'autumn',
+    emoji: '🍁',
+    leaves: 0xd07a2e,
+    grass: 0x9db04e,
     weights: { sunny: 0.4, cloudy: 0.3, rain: 0.22, snow: 0.08 },
   },
   {
-    key: 'winter', emoji: '⛄',
-    leaves: 0x8a7a52, grass: 0xb9c4b4,
+    key: 'winter',
+    emoji: '⛄',
+    leaves: 0x8a7a52,
+    grass: 0xb9c4b4,
     weights: { sunny: 0.3, cloudy: 0.3, rain: 0.06, snow: 0.34 },
   },
 ];

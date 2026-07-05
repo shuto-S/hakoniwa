@@ -61,7 +61,8 @@ export const en = {
   'settings.aiKeyNone': 'Not set',
   'settings.aiTest': 'Test connection',
   'settings.aiConsent': 'Consent to sending world state to an external AI',
-  'settings.aiNote': 'AI is opt-in. When off, unset, or offline, everything works as before. The key is stored encrypted on your device.',
+  'settings.aiNote':
+    'AI is opt-in. When off, unset, or offline, everything works as before. The key is stored encrypted on your device.',
   'ai.testOk': '✅ Connected',
   'ai.testFail': '⚠️ Could not connect: {error}',
   'ai.keySaved': '🔑 Key saved',
@@ -182,7 +183,20 @@ export const en = {
 
   // ---- character name pools (romanized) ----
   names: {
-    villager: ['Sora', 'Umi', 'Hana', 'Yuzu', 'Koharu', 'Momo', 'Rin', 'Taro', 'Aoi', 'Tsumugi', 'Sakura', 'Futa'],
+    villager: [
+      'Sora',
+      'Umi',
+      'Hana',
+      'Yuzu',
+      'Koharu',
+      'Momo',
+      'Rin',
+      'Taro',
+      'Aoi',
+      'Tsumugi',
+      'Sakura',
+      'Futa',
+    ],
     sheep: ['Moko', 'Fuwa', 'Mee', 'Powa', 'Yuki', 'Mashu', 'Wata'],
     chicken: ['Piyo', 'Kokko', 'Tosaka', 'Mame', 'Koko', 'Chabo'],
     deer: ['Momiji', 'Shikanosuke', 'Bambi'],

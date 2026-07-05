@@ -1,200 +1,232 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:" />
-  <title>つみにわ</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <div id="app">
-    <div id="topbar">
-      <span id="title" data-i18n="ui.title">つみにわ</span>
-      <span id="weather">☀️</span>
-      <span id="season"></span>
-      <div id="topbar-buttons">
-        <button id="btn-rotate-left" data-i18n-title="tip.rotateLeft">⟲</button>
-        <button id="btn-rotate-right" data-i18n-title="tip.rotateRight">⟳</button>
-        <button id="btn-auto" data-i18n-title="tip.auto">🌱</button>
-        <button id="btn-shot" data-i18n-title="tip.shot">📷</button>
-        <button id="btn-settings" data-i18n-title="tip.settings">⚙</button>
-        <button id="btn-quit" data-i18n-title="tip.quit">✕</button>
-      </div>
-    </div>
-    <div id="viewport"></div>
-    <div id="palette"></div>
-    <div id="hint" data-i18n="ui.hint">左クリック: 置く ／ 右クリック: こわす ／ ホイール: ズーム</div>
-    <div id="shot-modal" class="hidden">
-      <div id="shot-card">
-        <img id="shot-preview" alt="screenshot" />
-        <div id="shot-actions">
-          <button id="shot-save" data-i18n="shot.save">💾 保存</button>
-          <button id="shot-share" data-i18n="shot.share">𝕏 シェア</button>
-          <button id="shot-close" data-i18n="shot.close">とじる</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    />
+    <title>つみにわ</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="topbar">
+        <span id="title" data-i18n="ui.title">つみにわ</span>
+        <span id="weather">☀️</span>
+        <span id="season"></span>
+        <div id="topbar-buttons">
+          <button id="btn-rotate-left" data-i18n-title="tip.rotateLeft">⟲</button>
+          <button id="btn-rotate-right" data-i18n-title="tip.rotateRight">⟳</button>
+          <button id="btn-auto" data-i18n-title="tip.auto">🌱</button>
+          <button id="btn-shot" data-i18n-title="tip.shot">📷</button>
+          <button id="btn-settings" data-i18n-title="tip.settings">⚙</button>
+          <button id="btn-quit" data-i18n-title="tip.quit">✕</button>
         </div>
       </div>
-    </div>
-    <div id="settings-panel" class="hidden">
-      <div id="settings-card">
-        <div id="settings-head">
-          <h2 data-i18n="settings.header">設定</h2>
-          <button id="settings-close" data-i18n-title="settings.close">✕</button>
+      <div id="viewport"></div>
+      <div id="palette"></div>
+      <div id="hint" data-i18n="ui.hint">
+        左クリック: 置く ／ 右クリック: こわす ／ ホイール: ズーム
+      </div>
+      <div id="shot-modal" class="hidden">
+        <div id="shot-card">
+          <img id="shot-preview" alt="screenshot" />
+          <div id="shot-actions">
+            <button id="shot-save" data-i18n="shot.save">💾 保存</button>
+            <button id="shot-share" data-i18n="shot.share">𝕏 シェア</button>
+            <button id="shot-close" data-i18n="shot.close">とじる</button>
+          </div>
         </div>
-        <div id="settings-tabs">
-          <button class="tab active" data-tab="villagers" data-i18n="tab.villagers">なかま</button>
-          <button class="tab" data-tab="world" data-i18n="tab.world">せかい</button>
-          <button class="tab" data-tab="life" data-i18n="tab.life">くらし</button>
-          <button class="tab" data-tab="app" data-i18n="tab.app">その他</button>
-          <button class="tab" data-tab="ai" data-i18n="tab.ai">AI</button>
-        </div>
-        <div id="settings-body">
-
-          <!-- なかま -->
-          <div class="tab-pane active" data-pane="villagers">
-            <div class="row"><span data-i18n="settings.roster">むらの なかまたち</span></div>
-            <div id="roster"></div>
-            <div class="row">
-              <span data-i18n="settings.spawn">なかまを増やす</span>
-              <div class="spawn-buttons">
-                <button id="spawn-villager" data-i18n-title="tip.spawnVillager">🧑</button>
-                <button id="spawn-sheep" data-i18n-title="tip.spawnSheep">🐑</button>
-                <button id="spawn-chicken" data-i18n-title="tip.spawnChicken">🐔</button>
+      </div>
+      <div id="settings-panel" class="hidden">
+        <div id="settings-card">
+          <div id="settings-head">
+            <h2 data-i18n="settings.header">設定</h2>
+            <button id="settings-close" data-i18n-title="settings.close">✕</button>
+          </div>
+          <div id="settings-tabs">
+            <button class="tab active" data-tab="villagers" data-i18n="tab.villagers">
+              なかま
+            </button>
+            <button class="tab" data-tab="world" data-i18n="tab.world">せかい</button>
+            <button class="tab" data-tab="life" data-i18n="tab.life">くらし</button>
+            <button class="tab" data-tab="app" data-i18n="tab.app">その他</button>
+            <button class="tab" data-tab="ai" data-i18n="tab.ai">AI</button>
+          </div>
+          <div id="settings-body">
+            <!-- なかま -->
+            <div class="tab-pane active" data-pane="villagers">
+              <div class="row"><span data-i18n="settings.roster">むらの なかまたち</span></div>
+              <div id="roster"></div>
+              <div class="row">
+                <span data-i18n="settings.spawn">なかまを増やす</span>
+                <div class="spawn-buttons">
+                  <button id="spawn-villager" data-i18n-title="tip.spawnVillager">🧑</button>
+                  <button id="spawn-sheep" data-i18n-title="tip.spawnSheep">🐑</button>
+                  <button id="spawn-chicken" data-i18n-title="tip.spawnChicken">🐔</button>
+                </div>
               </div>
-            </div>
-            <label>
-              <span><span data-i18n="settings.charScale">キャラの大きさ</span> <b id="char-scale-value"></b></span>
-              <input type="range" id="char-scale" min="0.8" max="2.2" step="0.05" />
-            </label>
-            <label>
-              <span><span data-i18n="settings.charSpeed">キャラのはやさ</span> <b id="char-speed-value"></b></span>
-              <input type="range" id="char-speed" min="0.5" max="2" step="0.1" />
-            </label>
-          </div>
-
-          <!-- せかい -->
-          <div class="tab-pane" data-pane="world">
-            <label>
-              <span><span data-i18n="settings.gridSize">マス数</span> <b id="grid-size-value"></b></span>
-              <input type="range" id="grid-size" min="9" max="21" step="2" />
-            </label>
-            <label>
-              <span><span data-i18n="settings.maxHeight">高さ上限</span> <b id="max-height-value"></b></span>
-              <input type="range" id="max-height" min="4" max="12" step="1" />
-            </label>
-            <div class="row">
-              <button id="btn-reset" class="danger" data-i18n="settings.reset">世界をつくりなおす</button>
-            </div>
-            <p class="note" data-i18n="settings.resetNote">マス数・高さ上限を変えると世界がつくりなおされます</p>
-          </div>
-
-          <!-- くらし -->
-          <div class="tab-pane" data-pane="life">
-            <label>
-              <span><span data-i18n="settings.autoSpeed">自動発展のはやさ</span> <b id="auto-speed-value"></b></span>
-              <input type="range" id="auto-speed" min="0.5" max="3" step="0.1" />
-            </label>
-            <div class="row">
-              <span data-i18n="settings.weather">天気のうつりかわり</span>
-              <input type="checkbox" id="opt-weather" />
-            </div>
-            <label>
-              <span><span data-i18n="settings.weatherInterval">天気の変わる間隔</span> <b id="weather-interval-value"></b></span>
-              <input type="range" id="weather-interval" min="20" max="300" step="10" />
-            </label>
-            <div class="row">
-              <span data-i18n="settings.dayNight">昼夜サイクル</span>
-              <input type="checkbox" id="opt-daynight" />
-            </div>
-            <label>
-              <span><span data-i18n="settings.dayLength">1日の長さ</span> <b id="day-length-value"></b></span>
-              <input type="range" id="day-length" min="120" max="1200" step="60" />
-            </label>
-            <div class="row">
-              <span data-i18n="settings.decay">時のうつろい(燃え尽き・枯れ)</span>
-              <input type="checkbox" id="opt-decay" />
-            </div>
-            <div class="row">
-              <span data-i18n="settings.sky">空の演出(虹・ながれぼし)</span>
-              <input type="checkbox" id="opt-sky" />
-            </div>
-          </div>
-
-          <!-- その他 -->
-          <div class="tab-pane" data-pane="app">
-            <label>
-              <span data-i18n="settings.language">ことば</span>
-              <select id="opt-language"></select>
-            </label>
-            <div class="row">
-              <span data-i18n="settings.sound">環境音</span>
-              <input type="checkbox" id="opt-sound" />
-            </div>
-            <label>
-              <span><span data-i18n="settings.volume">音量</span> <b id="sound-volume-value"></b></span>
-              <input type="range" id="sound-volume" min="0" max="1" step="0.05" />
-            </label>
-            <div class="row">
-              <span data-i18n="settings.shadows">影を落とす</span>
-              <input type="checkbox" id="opt-shadows" />
-            </div>
-            <div class="row">
-              <span data-i18n="settings.pinned">常に最前面</span>
-              <input type="checkbox" id="opt-pinned" />
-            </div>
-            <div class="row">
-              <span data-i18n="settings.powerSave">省電力(非アクティブ時)</span>
-              <input type="checkbox" id="opt-powersave" />
-            </div>
-            <div class="row">
-              <span data-i18n="settings.autoLaunch">ログイン時に自動起動</span>
-              <input type="checkbox" id="opt-autolaunch" />
-            </div>
-          </div>
-
-          <!-- AI -->
-          <div class="tab-pane" data-pane="ai">
-            <div class="row">
-              <span data-i18n="settings.aiEnabled">AIフレーバー生成をつかう</span>
-              <input type="checkbox" id="opt-ai-enabled" />
-            </div>
-            <div id="ai-config" class="hidden">
               <label>
-                <span data-i18n="settings.aiAuthMode">認証方式</span>
-                <select id="opt-ai-auth"></select>
+                <span
+                  ><span data-i18n="settings.charScale">キャラの大きさ</span>
+                  <b id="char-scale-value"></b
+                ></span>
+                <input type="range" id="char-scale" min="0.8" max="2.2" step="0.05" />
               </label>
               <label>
-                <span data-i18n="settings.aiModel">モデル</span>
-                <select id="opt-ai-model"></select>
+                <span
+                  ><span data-i18n="settings.charSpeed">キャラのはやさ</span>
+                  <b id="char-speed-value"></b
+                ></span>
+                <input type="range" id="char-speed" min="0.5" max="2" step="0.1" />
+              </label>
+            </div>
+
+            <!-- せかい -->
+            <div class="tab-pane" data-pane="world">
+              <label>
+                <span
+                  ><span data-i18n="settings.gridSize">マス数</span> <b id="grid-size-value"></b
+                ></span>
+                <input type="range" id="grid-size" min="9" max="21" step="2" />
               </label>
               <label>
-                <span><span data-i18n="settings.aiKey">APIキー</span> <b id="ai-key-status"></b></span>
-                <input type="password" id="ai-key-input" autocomplete="off" />
+                <span
+                  ><span data-i18n="settings.maxHeight">高さ上限</span> <b id="max-height-value"></b
+                ></span>
+                <input type="range" id="max-height" min="4" max="12" step="1" />
               </label>
-              <div class="row ai-buttons">
-                <button id="ai-key-save" data-i18n="settings.aiKeySave">保存</button>
-                <button id="ai-key-clear" data-i18n="settings.aiKeyClear">消去</button>
-                <button id="ai-test" data-i18n="settings.aiTest">接続テスト</button>
+              <div class="row">
+                <button id="btn-reset" class="danger" data-i18n="settings.reset">
+                  世界をつくりなおす
+                </button>
+              </div>
+              <p class="note" data-i18n="settings.resetNote">
+                マス数・高さ上限を変えると世界がつくりなおされます
+              </p>
+            </div>
+
+            <!-- くらし -->
+            <div class="tab-pane" data-pane="life">
+              <label>
+                <span
+                  ><span data-i18n="settings.autoSpeed">自動発展のはやさ</span>
+                  <b id="auto-speed-value"></b
+                ></span>
+                <input type="range" id="auto-speed" min="0.5" max="3" step="0.1" />
+              </label>
+              <div class="row">
+                <span data-i18n="settings.weather">天気のうつりかわり</span>
+                <input type="checkbox" id="opt-weather" />
+              </div>
+              <label>
+                <span
+                  ><span data-i18n="settings.weatherInterval">天気の変わる間隔</span>
+                  <b id="weather-interval-value"></b
+                ></span>
+                <input type="range" id="weather-interval" min="20" max="300" step="10" />
+              </label>
+              <div class="row">
+                <span data-i18n="settings.dayNight">昼夜サイクル</span>
+                <input type="checkbox" id="opt-daynight" />
+              </div>
+              <label>
+                <span
+                  ><span data-i18n="settings.dayLength">1日の長さ</span>
+                  <b id="day-length-value"></b
+                ></span>
+                <input type="range" id="day-length" min="120" max="1200" step="60" />
+              </label>
+              <div class="row">
+                <span data-i18n="settings.decay">時のうつろい(燃え尽き・枯れ)</span>
+                <input type="checkbox" id="opt-decay" />
               </div>
               <div class="row">
-                <span data-i18n="settings.aiConsent">世界の状態を外部AIに送ることに同意する</span>
-                <input type="checkbox" id="opt-ai-consent" />
+                <span data-i18n="settings.sky">空の演出(虹・ながれぼし)</span>
+                <input type="checkbox" id="opt-sky" />
               </div>
-              <p class="note" data-i18n="settings.aiNote">AIはオプトインです。</p>
-              <hr class="sep" />
+            </div>
+
+            <!-- その他 -->
+            <div class="tab-pane" data-pane="app">
               <label>
-                <span data-i18n="settings.aiWorldgen">ことばで世界をつくる</span>
-                <input type="text" id="ai-worldgen-input" autocomplete="off" />
+                <span data-i18n="settings.language">ことば</span>
+                <select id="opt-language"></select>
               </label>
-              <div class="row ai-buttons">
-                <button id="ai-worldgen-go" data-i18n="settings.aiWorldgenGo">つくる</button>
+              <div class="row">
+                <span data-i18n="settings.sound">環境音</span>
+                <input type="checkbox" id="opt-sound" />
+              </div>
+              <label>
+                <span
+                  ><span data-i18n="settings.volume">音量</span> <b id="sound-volume-value"></b
+                ></span>
+                <input type="range" id="sound-volume" min="0" max="1" step="0.05" />
+              </label>
+              <div class="row">
+                <span data-i18n="settings.shadows">影を落とす</span>
+                <input type="checkbox" id="opt-shadows" />
+              </div>
+              <div class="row">
+                <span data-i18n="settings.pinned">常に最前面</span>
+                <input type="checkbox" id="opt-pinned" />
+              </div>
+              <div class="row">
+                <span data-i18n="settings.powerSave">省電力(非アクティブ時)</span>
+                <input type="checkbox" id="opt-powersave" />
+              </div>
+              <div class="row">
+                <span data-i18n="settings.autoLaunch">ログイン時に自動起動</span>
+                <input type="checkbox" id="opt-autolaunch" />
+              </div>
+            </div>
+
+            <!-- AI -->
+            <div class="tab-pane" data-pane="ai">
+              <div class="row">
+                <span data-i18n="settings.aiEnabled">AIフレーバー生成をつかう</span>
+                <input type="checkbox" id="opt-ai-enabled" />
+              </div>
+              <div id="ai-config" class="hidden">
+                <label>
+                  <span data-i18n="settings.aiAuthMode">認証方式</span>
+                  <select id="opt-ai-auth"></select>
+                </label>
+                <label>
+                  <span data-i18n="settings.aiModel">モデル</span>
+                  <select id="opt-ai-model"></select>
+                </label>
+                <label>
+                  <span
+                    ><span data-i18n="settings.aiKey">APIキー</span> <b id="ai-key-status"></b
+                  ></span>
+                  <input type="password" id="ai-key-input" autocomplete="off" />
+                </label>
+                <div class="row ai-buttons">
+                  <button id="ai-key-save" data-i18n="settings.aiKeySave">保存</button>
+                  <button id="ai-key-clear" data-i18n="settings.aiKeyClear">消去</button>
+                  <button id="ai-test" data-i18n="settings.aiTest">接続テスト</button>
+                </div>
+                <div class="row">
+                  <span data-i18n="settings.aiConsent">世界の状態を外部AIに送ることに同意する</span>
+                  <input type="checkbox" id="opt-ai-consent" />
+                </div>
+                <p class="note" data-i18n="settings.aiNote">AIはオプトインです。</p>
+                <hr class="sep" />
+                <label>
+                  <span data-i18n="settings.aiWorldgen">ことばで世界をつくる</span>
+                  <input type="text" id="ai-worldgen-input" autocomplete="off" />
+                </label>
+                <div class="row ai-buttons">
+                  <button id="ai-worldgen-go" data-i18n="settings.aiWorldgenGo">つくる</button>
+                </div>
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
-  </div>
-  <script src="dist/renderer.js" defer></script>
-</body>
+    <script src="dist/renderer.js" defer></script>
+  </body>
 </html>

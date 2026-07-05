@@ -133,9 +133,7 @@ async function main() {
     flavorBusy = true;
     try {
       const line =
-        kind === 'travelerleave'
-          ? await generateTale(ai, ctx)
-          : await generatePoem(ai, kind, ctx);
+        kind === 'travelerleave' ? await generateTale(ai, ctx) : await generatePoem(ai, kind, ctx);
       if (line) showToast(line);
     } finally {
       flavorBusy = false;
@@ -250,8 +248,8 @@ async function main() {
             traveler: 'event.visitorTraveler',
             deer: 'event.visitorDeer',
             cat: 'event.visitorCat',
-          }[type]
-        )
+          }[type],
+        ),
       );
     }
   }
@@ -336,7 +334,7 @@ async function main() {
         }
       },
     },
-    state
+    state,
   );
 
   // 描画済みのワールド版。rebuildWorld からも参照するのでここで宣言しておく
@@ -413,7 +411,7 @@ async function main() {
       event.preventDefault();
       view.addZoom(event.deltaY);
     },
-    { passive: false }
+    { passive: false },
   );
 
   window.addEventListener('resize', () => view.resize());

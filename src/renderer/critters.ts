@@ -51,11 +51,11 @@ interface DuckMove {
 function basicMesh(
   geometry: THREE.BufferGeometry,
   color: number,
-  opts: Partial<THREE.MeshStandardMaterialParameters> = {}
+  opts: Partial<THREE.MeshStandardMaterialParameters> = {},
 ): THREE.Mesh {
   return new THREE.Mesh(
     geometry,
-    new THREE.MeshStandardMaterial({ color, roughness: 0.8, flatShading: true, ...opts })
+    new THREE.MeshStandardMaterial({ color, roughness: 0.8, flatShading: true, ...opts }),
   );
 }
 
@@ -107,7 +107,7 @@ export class CritterSystem {
     world: World,
     weather: WeatherSystem,
     daynight: DayNight,
-    settings: Settings
+    settings: Settings,
   ) {
     this.scene = scene;
     this.weather = weather;
@@ -197,7 +197,7 @@ export class CritterSystem {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
       'position',
-      new THREE.BufferAttribute(new Float32Array([0, 0, 0, 0.55, 0.28, -0.1]), 3)
+      new THREE.BufferAttribute(new Float32Array([0, 0, 0, 0.55, 0.28, -0.1]), 3),
     );
     this.star = new THREE.Line(
       geometry,
@@ -206,7 +206,7 @@ export class CritterSystem {
         transparent: true,
         opacity: 0,
         blending: THREE.AdditiveBlending,
-      })
+      }),
     );
     this.star.visible = false;
     this.star.frustumCulled = false;
@@ -234,7 +234,7 @@ export class CritterSystem {
       this.star.position.set(
         (Math.random() - 0.2) * this.span,
         this.skyY + 1.8 + Math.random(),
-        (Math.random() - 0.5) * this.span * 0.6
+        (Math.random() - 0.5) * this.span * 0.6,
       );
       this.star.visible = true;
       return;
@@ -275,7 +275,7 @@ export class CritterSystem {
         this.birdFlock.position.set(
           -this.span / 2 - 1.5,
           this.skyY + Math.random() * 1.2,
-          (Math.random() - 0.5) * this.span * 0.7
+          (Math.random() - 0.5) * this.span * 0.7,
         );
       }
       return;
@@ -296,7 +296,7 @@ export class CritterSystem {
     for (let i = 0; i < 5; i++) {
       const mesh = basicMesh(
         new THREE.OctahedronGeometry(0.05, 0),
-        BUTTERFLY_COLORS[i % BUTTERFLY_COLORS.length]
+        BUTTERFLY_COLORS[i % BUTTERFLY_COLORS.length],
       );
       mesh.scale.set(1.6, 0.5, 1);
       mesh.visible = false;
@@ -326,7 +326,7 @@ export class CritterSystem {
       b.mesh.position.set(
         b.anchor.x + Math.sin(t * 0.7) * 0.5,
         b.anchor.y + 0.35 + Math.sin(t * 2.3) * 0.15,
-        b.anchor.z + Math.cos(t * 0.9) * 0.5
+        b.anchor.z + Math.cos(t * 0.9) * 0.5,
       );
       b.mesh.rotation.y = t * 0.8;
       b.mesh.scale.x = 1.6 * (0.6 + 0.4 * Math.abs(Math.sin(t * 12))); // 羽ばたき
@@ -390,7 +390,7 @@ export class CritterSystem {
     this.fish.position.set(
       this.fishJump.x + t * 0.3,
       this.fishJump.surfaceY - 0.15 + Math.sin(t * Math.PI) * 0.6,
-      this.fishJump.z
+      this.fishJump.z,
     );
     this.fish.rotation.z = Math.PI - t * Math.PI * 2; // 弧を描いて回る
   }
@@ -423,7 +423,7 @@ export class CritterSystem {
         opacity: 0,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
-      })
+      }),
     );
     this.fireflies.visible = false;
     this.fireflies.frustumCulled = false;
@@ -476,7 +476,7 @@ export class CritterSystem {
         sizeAttenuation: false,
         transparent: true,
         opacity: 0.85,
-      })
+      }),
     );
     this.fallingLeaves.visible = false;
     this.fallingLeaves.frustumCulled = false;

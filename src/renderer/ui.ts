@@ -83,7 +83,9 @@ export function setupUI(callbacks: Callbacks, state: State) {
 
   // ---- トップバー ----
   document.getElementById('btn-rotate-left')!.addEventListener('click', () => callbacks.rotate(1));
-  document.getElementById('btn-rotate-right')!.addEventListener('click', () => callbacks.rotate(-1));
+  document
+    .getElementById('btn-rotate-right')!
+    .addEventListener('click', () => callbacks.rotate(-1));
   document.getElementById('btn-quit')!.addEventListener('click', () => callbacks.quit());
   // ---- スクショのプレビュー(撮る → 確認してから保存/シェア) ----
   const shotModal = document.getElementById('shot-modal') as HTMLElement;
@@ -188,7 +190,8 @@ export function setupUI(callbacks: Callbacks, state: State) {
       callbacks.settingChanged(key, Number(input.value));
     });
   };
-  const times = (v: number) => t('unit.times', { v: v.toFixed(2).replace(/0+$/, '').replace(/\.$/, '') });
+  const times = (v: number) =>
+    t('unit.times', { v: v.toFixed(2).replace(/0+$/, '').replace(/\.$/, '') });
   bindSlider('char-scale', 'characterScale', times);
   bindSlider('char-speed', 'characterSpeed', times);
   bindSlider('auto-speed', 'autoSpeed', times);
@@ -232,9 +235,13 @@ export function setupUI(callbacks: Callbacks, state: State) {
     callbacks.settingChanged('language', langSelect.value); // 天気・季節の引き直し+保存
   });
 
-  document.getElementById('spawn-villager')!.addEventListener('click', () => callbacks.spawn('villager'));
+  document
+    .getElementById('spawn-villager')!
+    .addEventListener('click', () => callbacks.spawn('villager'));
   document.getElementById('spawn-sheep')!.addEventListener('click', () => callbacks.spawn('sheep'));
-  document.getElementById('spawn-chicken')!.addEventListener('click', () => callbacks.spawn('chicken'));
+  document
+    .getElementById('spawn-chicken')!
+    .addEventListener('click', () => callbacks.spawn('chicken'));
   document.getElementById('btn-reset')!.addEventListener('click', () => {
     callbacks.regenerate(Number(gridSize.value), Number(maxHeight.value));
   });
@@ -319,7 +326,10 @@ function setupAiSettings(callbacks: Callbacks, state: State) {
   });
   document.getElementById('ai-test')!.addEventListener('click', async () => {
     if (!(await window.tsuminiwa.ai.hasKey())) return showToast(t('ai.needKey'));
-    const r = await window.tsuminiwa.ai.test({ authMode: authSel.value as AiAuthMode, model: modelSel.value });
+    const r = await window.tsuminiwa.ai.test({
+      authMode: authSel.value as AiAuthMode,
+      model: modelSel.value,
+    });
     showToast(r.ok ? t('ai.testOk') : t('ai.testFail', { error: r.error || '' }));
   });
 
@@ -399,7 +409,10 @@ function setupTooltips() {
     const above = rect.top > window.innerHeight / 2;
     const x = Math.max(
       4,
-      Math.min(window.innerWidth - tipRect.width - 4, rect.left + rect.width / 2 - tipRect.width / 2)
+      Math.min(
+        window.innerWidth - tipRect.width - 4,
+        rect.left + rect.width / 2 - tipRect.width / 2,
+      ),
     );
     const y = above ? rect.top - tipRect.height - 6 : rect.bottom + 6;
     tip.style.left = `${x}px`;
@@ -410,7 +423,9 @@ function setupTooltips() {
 
   // dataset.tip を持つ(あるいは動的に入る)要素にホバー表示をつける。
   // 訳文は applyDomTranslations / refreshPaletteTips / 各 setter が dataset.tip に入れる
-  for (const el of document.querySelectorAll<HTMLElement>('[data-i18n-title], .swatch, #weather, #season')) {
+  for (const el of document.querySelectorAll<HTMLElement>(
+    '[data-i18n-title], .swatch, #weather, #season',
+  )) {
     el.addEventListener('mouseenter', () => show(el));
     el.addEventListener('mouseleave', hide);
     el.addEventListener('click', hide);

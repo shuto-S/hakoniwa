@@ -28,12 +28,15 @@ export function worldgenSchema() {
 }
 
 // 受け取った params を既定で埋め、範囲にクランプする(不正値は無視して既定へ)
-export function clampParams(params: Record<string, number> | null | undefined): Record<string, number> {
+export function clampParams(
+  params: Record<string, number> | null | undefined,
+): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [key, def] of Object.entries(WORLDGEN_PARAMS)) {
-    const v = params && typeof params[key] === 'number' && Number.isFinite(params[key])
-      ? params[key]
-      : def.default;
+    const v =
+      params && typeof params[key] === 'number' && Number.isFinite(params[key])
+        ? params[key]
+        : def.default;
     out[key] = Math.max(def.min, Math.min(def.max, v));
   }
   return out;

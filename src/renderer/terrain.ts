@@ -23,7 +23,8 @@ interface TreeBlock {
 function makeNoise(cols: number, rows: number): (col: number, row: number) => number {
   const size = 6;
   const grid = Array.from({ length: size * size }, () => Math.random());
-  const at = (x: number, y: number): number => grid[Math.min(size - 1, y) * size + Math.min(size - 1, x)];
+  const at = (x: number, y: number): number =>
+    grid[Math.min(size - 1, y) * size + Math.min(size - 1, x)];
   return (col: number, row: number): number => {
     const fx = (col / Math.max(1, cols - 1)) * (size - 1);
     const fy = (row / Math.max(1, rows - 1)) * (size - 1);
@@ -44,7 +45,7 @@ export function generateWorld(
   cols: number,
   rows: number,
   maxHeight: number,
-  params: WorldGenParams | null = null
+  params: WorldGenParams | null = null,
 ): World {
   const world = new World(cols, rows, maxHeight);
   const noise = makeNoise(cols, rows);

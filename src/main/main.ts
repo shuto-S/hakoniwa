@@ -80,11 +80,13 @@ ipcMain.handle('ai:clearKey', () => {
   return true;
 });
 ipcMain.handle('ai:hasKey', () => hasKey());
-ipcMain.handle('ai:test', (_event: IpcMainInvokeEvent, opts: { authMode: AiAuthMode; model: string }) =>
-  testConnection(opts || {})
+ipcMain.handle(
+  'ai:test',
+  (_event: IpcMainInvokeEvent, opts: { authMode: AiAuthMode; model: string }) =>
+    testConnection(opts || {}),
 );
 ipcMain.handle('ai:generate', (_event: IpcMainInvokeEvent, opts: AiGenerateOptions) =>
-  generate(opts || {})
+  generate(opts || {}),
 );
 
 function pngBuffer(dataUrl: string): Buffer {
@@ -117,7 +119,7 @@ ipcMain.handle('shot:share', async (_event: IpcMainInvokeEvent, dataUrl: string)
   try {
     clipboard.writeImage(nativeImage.createFromBuffer(pngBuffer(dataUrl)));
     await shell.openExternal(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}`
+      `https://twitter.com/intent/tweet?text=${encodeURIComponent(SHARE_TEXT)}`,
     );
     return true;
   } catch {

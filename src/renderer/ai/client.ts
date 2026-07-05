@@ -52,7 +52,11 @@ export class AiClient {
   // settings: 参照を渡す(aiEnabled/aiAuthMode/aiModel/aiConsent を見る)
   // backend: { generate(opts)->Promise<{ok,text}>, hasKey()->Promise<bool> }
   // now: () => ms
-  constructor(settings: AiClientSettings, backend: AiBackend, { now = () => Date.now(), limits }: AiClientOptions = {}) {
+  constructor(
+    settings: AiClientSettings,
+    backend: AiBackend,
+    { now = () => Date.now(), limits }: AiClientOptions = {},
+  ) {
     this.settings = settings;
     this.backend = backend;
     this.now = now;
@@ -83,7 +87,8 @@ export class AiClient {
     const e = String(error).toLowerCase();
     let kind: AiFailureKind | null = null;
     if (/resource_exhausted|quota|credit|billing|rate.?limit|\b429\b/.test(e)) kind = 'quota';
-    else if (/unauthenticated|permission_denied|api.?key|invalid.*key|\b401\b|\b403\b/.test(e)) kind = 'auth';
+    else if (/unauthenticated|permission_denied|api.?key|invalid.*key|\b401\b|\b403\b/.test(e))
+      kind = 'auth';
     if (!kind) return;
     this.cooldownUntil = this.now() + this.limits.cooldownMs;
     if (this.onNotice) this.onNotice(kind);
@@ -106,7 +111,9 @@ export class AiClient {
   }
 
   // 1件だけ生成。使えない/失敗時は null(呼び出し側でフォールバック)
-  async generate({ system, prompt, schema, maxOutputTokens }: AiGenerateOptions = {}): Promise<string | null | undefined> {
+  async generate({ system, prompt, schema, maxOutputTokens }: AiGenerateOptions = {}): Promise<
+    string | null | undefined
+  > {
     if (!this.available() || !this.underRate()) return null;
     // レート枠は await の前に同期で確保する。そうしないと、同じフレームで並行して
     // 走る別種の生成(つぶやき/かわら版/命名補充)が古い lastCallAt を見て、

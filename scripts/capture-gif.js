@@ -27,9 +27,7 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // デモ用のセーブデータ: 見栄えする住民をそろえ、時間の流れをはやめる
 async function buildDemoSave() {
-  const { generateWorld } = await import(
-    pathToFileURL(path.join(ROOT, 'src/renderer/terrain.js'))
-  );
+  const { generateWorld } = await import(pathToFileURL(path.join(ROOT, 'src/renderer/terrain.js')));
   const world = generateWorld(15, 15, 8);
   const spots = world
     .columnsWhere((c, r) => world.isWalkable(c, r))
@@ -114,9 +112,15 @@ function composite(bitmap, width, height, out) {
       const g = bitmap[i + 1] + sg * (1 - a);
       const b = bitmap[i] + sb * (1 - a);
       if (out === 'bgra') {
-        dst[i] = b; dst[i + 1] = g; dst[i + 2] = r; dst[i + 3] = 255;
+        dst[i] = b;
+        dst[i + 1] = g;
+        dst[i + 2] = r;
+        dst[i + 3] = 255;
       } else {
-        dst[i] = r; dst[i + 1] = g; dst[i + 2] = b; dst[i + 3] = 255;
+        dst[i] = r;
+        dst[i + 1] = g;
+        dst[i + 2] = b;
+        dst[i + 3] = 255;
       }
     }
   }
@@ -134,7 +138,11 @@ app.whenReady().then(async () => {
   ipcMain.on('app:autolaunch', () => {});
 
   const win = new BrowserWindow({
-    width: 480, height: 540, transparent: true, frame: false, hasShadow: false,
+    width: 480,
+    height: 540,
+    transparent: true,
+    frame: false,
+    hasShadow: false,
     webPreferences: {
       preload: path.join(ROOT, 'preload.js'),
       contextIsolation: true,
@@ -164,7 +172,9 @@ app.whenReady().then(async () => {
     // mp4 用: フル解像度の PNG フレームをディスクへ
     const bmp = image.toBitmap();
     const bgra = composite(bmp, full.width, full.height, 'bgra');
-    const png = nativeImage.createFromBitmap(bgra, { width: full.width, height: full.height }).toPNG();
+    const png = nativeImage
+      .createFromBitmap(bgra, { width: full.width, height: full.height })
+      .toPNG();
     fs.writeFileSync(path.join(framesDir, `f-${String(i + 1).padStart(4, '0')}.png`), png);
 
     // GIF 用: 縮小して合成
@@ -192,14 +202,28 @@ app.whenReady().then(async () => {
 
   // ---- mp4 を書き出す(ffmpeg があれば) ----
   const mp4Out = path.join(ROOT, 'docs', 'demo.mp4');
-  const ff = spawnSync('ffmpeg', [
-    '-y', '-framerate', String(FPS),
-    '-i', path.join(framesDir, 'f-%04d.png'),
-    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20',
-    '-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2',
-    '-movflags', '+faststart',
-    mp4Out,
-  ], { stdio: 'ignore' });
+  const ff = spawnSync(
+    'ffmpeg',
+    [
+      '-y',
+      '-framerate',
+      String(FPS),
+      '-i',
+      path.join(framesDir, 'f-%04d.png'),
+      '-c:v',
+      'libx264',
+      '-pix_fmt',
+      'yuv420p',
+      '-crf',
+      '20',
+      '-vf',
+      'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+      '-movflags',
+      '+faststart',
+      mp4Out,
+    ],
+    { stdio: 'ignore' },
+  );
   if (ff.status === 0) {
     console.log(`wrote ${mp4Out} (${(fs.statSync(mp4Out).size / 1024 / 1024).toFixed(2)} MB)`);
   } else {

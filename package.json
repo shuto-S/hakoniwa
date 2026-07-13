@@ -1,6 +1,6 @@
 {
   "name": "tsuminiwa",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "デスクトップの端で動く、六角ブロックの箱庭",
   "author": "shuto",
   "license": "MIT",
@@ -16,6 +16,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "node --test test/*.test.mjs",
+    "smoke:electron": "npm run build && electron . --smoke-test",
     "package": "npm run build && electron-packager . つみにわ --platform=darwin --arch=${npm_config_arch:-arm64} --out=release --overwrite --icon=build/icon.icns --app-bundle-id=dev.amusphere.tsuminiwa --ignore=\"^/src\" --ignore=\"^/tsconfig\\.json$\" --ignore=\"^/eslint\\.config\\.js$\" --ignore=\"^/release\" --ignore=\"^/build\" --ignore=\"^/test\" --ignore=\"^/scripts\" --ignore=\"^/docs\" --ignore=\"^/\\.\" --ignore=\"^/AGENTS\\.md\" --ignore=\"^/README\" --ignore=\"^/DEVELOPMENT\\.md\" --ignore=\"^/LICENSE\"",
     "prepare": "husky"
   },

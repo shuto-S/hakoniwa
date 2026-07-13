@@ -40,8 +40,14 @@ export interface SaveShotResult {
   path?: string;
 }
 
+export interface WorldLoadResult {
+  json: string | null;
+  recovered: boolean;
+  failed: boolean;
+}
+
 export interface TsuminiwaBridge {
-  loadWorld(): Promise<string | null>;
+  loadWorld(): Promise<WorldLoadResult>;
   saveWorld(json: string): Promise<boolean>;
   quit(): void;
   setPinned(pinned: boolean): void;

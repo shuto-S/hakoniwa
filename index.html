@@ -13,13 +13,14 @@
     <div id="app">
       <div id="topbar">
         <span id="title" data-i18n="ui.title">つみにわ</span>
-        <span id="weather">☀️</span>
-        <span id="season"></span>
+        <span id="weather" role="status" aria-live="polite">☀️</span>
+        <span id="season" role="status"></span>
         <div id="topbar-buttons">
           <button id="btn-rotate-left" data-i18n-title="tip.rotateLeft">⟲</button>
           <button id="btn-rotate-right" data-i18n-title="tip.rotateRight">⟳</button>
           <button id="btn-auto" data-i18n-title="tip.auto">🌱</button>
           <button id="btn-shot" data-i18n-title="tip.shot">📷</button>
+          <button id="btn-log" data-i18n-title="tip.log">📜</button>
           <button id="btn-settings" data-i18n-title="tip.settings">⚙</button>
           <button id="btn-quit" data-i18n-title="tip.quit">✕</button>
         </div>
@@ -29,8 +30,15 @@
       <div id="hint" data-i18n="ui.hint">
         左クリック: 置く ／ 右クリック: こわす ／ ホイール: ズーム
       </div>
-      <div id="shot-modal" class="hidden">
+      <div
+        id="shot-modal"
+        class="hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="shot-title"
+      >
         <div id="shot-card">
+          <h2 id="shot-title" class="sr-only" data-i18n="shot.header">スクリーンショット</h2>
           <img id="shot-preview" alt="screenshot" />
           <div id="shot-actions">
             <button id="shot-save" data-i18n="shot.save">💾 保存</button>
@@ -39,24 +47,100 @@
           </div>
         </div>
       </div>
-      <div id="settings-panel" class="hidden">
+      <div
+        id="log-panel"
+        class="hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="log-title"
+      >
+        <div id="log-card">
+          <div class="modal-head">
+            <h2 id="log-title" data-i18n="log.header">村のきろく</h2>
+            <button id="log-close" data-i18n-title="settings.close">✕</button>
+          </div>
+          <div id="event-log" role="log" aria-live="polite"></div>
+          <button id="log-clear" data-i18n="log.clear">きろくを消す</button>
+        </div>
+      </div>
+      <div
+        id="settings-panel"
+        class="hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-title"
+      >
         <div id="settings-card">
           <div id="settings-head">
-            <h2 data-i18n="settings.header">設定</h2>
+            <h2 id="settings-title" data-i18n="settings.header">設定</h2>
             <button id="settings-close" data-i18n-title="settings.close">✕</button>
           </div>
-          <div id="settings-tabs">
-            <button class="tab active" data-tab="villagers" data-i18n="tab.villagers">
+          <div id="settings-tabs" role="tablist">
+            <button
+              id="tab-villagers"
+              class="tab active"
+              data-tab="villagers"
+              data-i18n="tab.villagers"
+              role="tab"
+              aria-controls="pane-villagers"
+              aria-selected="true"
+            >
               なかま
             </button>
-            <button class="tab" data-tab="world" data-i18n="tab.world">せかい</button>
-            <button class="tab" data-tab="life" data-i18n="tab.life">くらし</button>
-            <button class="tab" data-tab="app" data-i18n="tab.app">その他</button>
-            <button class="tab" data-tab="ai" data-i18n="tab.ai">AI</button>
+            <button
+              id="tab-world"
+              class="tab"
+              data-tab="world"
+              data-i18n="tab.world"
+              role="tab"
+              aria-controls="pane-world"
+              aria-selected="false"
+            >
+              せかい
+            </button>
+            <button
+              id="tab-life"
+              class="tab"
+              data-tab="life"
+              data-i18n="tab.life"
+              role="tab"
+              aria-controls="pane-life"
+              aria-selected="false"
+            >
+              くらし
+            </button>
+            <button
+              id="tab-app"
+              class="tab"
+              data-tab="app"
+              data-i18n="tab.app"
+              role="tab"
+              aria-controls="pane-app"
+              aria-selected="false"
+            >
+              その他
+            </button>
+            <button
+              id="tab-ai"
+              class="tab"
+              data-tab="ai"
+              data-i18n="tab.ai"
+              role="tab"
+              aria-controls="pane-ai"
+              aria-selected="false"
+            >
+              AI
+            </button>
           </div>
           <div id="settings-body">
             <!-- なかま -->
-            <div class="tab-pane active" data-pane="villagers">
+            <div
+              id="pane-villagers"
+              class="tab-pane active"
+              data-pane="villagers"
+              role="tabpanel"
+              aria-labelledby="tab-villagers"
+            >
               <div class="row"><span data-i18n="settings.roster">むらの なかまたち</span></div>
               <div id="roster"></div>
               <div class="row">
@@ -84,7 +168,13 @@
             </div>
 
             <!-- せかい -->
-            <div class="tab-pane" data-pane="world">
+            <div
+              id="pane-world"
+              class="tab-pane"
+              data-pane="world"
+              role="tabpanel"
+              aria-labelledby="tab-world"
+            >
               <label>
                 <span
                   ><span data-i18n="settings.gridSize">マス数</span> <b id="grid-size-value"></b
@@ -108,7 +198,13 @@
             </div>
 
             <!-- くらし -->
-            <div class="tab-pane" data-pane="life">
+            <div
+              id="pane-life"
+              class="tab-pane"
+              data-pane="life"
+              role="tabpanel"
+              aria-labelledby="tab-life"
+            >
               <label>
                 <span
                   ><span data-i18n="settings.autoSpeed">自動発展のはやさ</span>
@@ -149,7 +245,13 @@
             </div>
 
             <!-- その他 -->
-            <div class="tab-pane" data-pane="app">
+            <div
+              id="pane-app"
+              class="tab-pane"
+              data-pane="app"
+              role="tabpanel"
+              aria-labelledby="tab-app"
+            >
               <label>
                 <span data-i18n="settings.language">ことば</span>
                 <select id="opt-language"></select>
@@ -183,7 +285,13 @@
             </div>
 
             <!-- AI -->
-            <div class="tab-pane" data-pane="ai">
+            <div
+              id="pane-ai"
+              class="tab-pane"
+              data-pane="ai"
+              role="tabpanel"
+              aria-labelledby="tab-ai"
+            >
               <div class="row">
                 <span data-i18n="settings.aiEnabled">AIフレーバー生成をつかう</span>
                 <input type="checkbox" id="opt-ai-enabled" />
@@ -201,7 +309,12 @@
                   <span
                     ><span data-i18n="settings.aiKey">APIキー</span> <b id="ai-key-status"></b
                   ></span>
-                  <input type="password" id="ai-key-input" autocomplete="off" />
+                  <input
+                    type="password"
+                    id="ai-key-input"
+                    autocomplete="off"
+                    data-i18n-placeholder="settings.aiKeyPlaceholder"
+                  />
                 </label>
                 <div class="row ai-buttons">
                   <button id="ai-key-save" data-i18n="settings.aiKeySave">保存</button>
@@ -216,7 +329,12 @@
                 <hr class="sep" />
                 <label>
                   <span data-i18n="settings.aiWorldgen">ことばで世界をつくる</span>
-                  <input type="text" id="ai-worldgen-input" autocomplete="off" />
+                  <input
+                    type="text"
+                    id="ai-worldgen-input"
+                    autocomplete="off"
+                    data-i18n-placeholder="settings.aiWorldgenPlaceholder"
+                  />
                 </label>
                 <div class="row ai-buttons">
                   <button id="ai-worldgen-go" data-i18n="settings.aiWorldgenGo">つくる</button>

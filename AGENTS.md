@@ -21,6 +21,7 @@ npm run lint       # ESLint(同名シャドウ・初期化前アクセス等)
 npm run watch      # レンダラーバンドルの watch モード
 npm start          # build + electron 起動
 npm test           # node:test。テストは Node ネイティブの型ストリップで .ts を直接読む(Node 24+)
+npm run smoke:electron # 一時 userData で Electron を起動する主要UIスモークテスト
 npm run package    # macOS アプリ化(release/つみにわ-darwin-arm64/つみにわ.app)
 ```
 
@@ -220,12 +221,16 @@ src/renderer/
 (各システムが settings オブジェクトへの参照を持っているので、値の読み取りだけなら 4 は不要)
 
 ### セーブ
-- world + characters + auto フラグ + settings + dayTime + day + waterDist を JSON で
+- world + characters + auto フラグ + settings + dayTime + day + waterDist + eventLog を JSON で
   `~/Library/Application Support/tsuminiwa/world.json` に保存(開発版とアプリ版で共有)。
 - **保存されないもの**(再起動でリセット): 旅人、にわとりの卵、aging の年齢、
   水たまり、虹、天気の状態。
-  変更から1.2秒デバウンスして書き込み。スキーマを変えるときは `serialize()/deserialize()` と
+  変更から1.2秒デバウンスし、一時ファイルから atomic に置換。直前の正常な世代は
+  `world.backup.json` に保持し、破損時は自動復元する。スキーマを変えるときは `serialize()/deserialize()` と
   `v` フィールドを更新すること。
+- マス数・高さ上限は `input` で表示だけ更新し、`change` で即時再生成する。再生成前確認は出さず、
+  手動リセット・AI世界生成と共通の一世代Undoを通す。Undoは世界・住民・設定・時刻・水を復元し、
+  全システムの `setWorld()` と描画・保存まで行う。
 
 ## ハマりどころ(実績あり)
 

@@ -13,10 +13,19 @@ import { Aging } from './aging.ts';
 import { AmbientAudio } from './audio.ts';
 import { CritterSystem } from './critters.ts';
 import { SeasonalEvents } from './seasonal.ts';
-import { setupUI, showToast, setWeatherDisplay, setSeasonDisplay } from './ui.ts';
+import {
+  setupUI,
+  showToast,
+  showActionToast,
+  setWeatherDisplay,
+  setSeasonDisplay,
+  restoreEventLog,
+  eventLogSnapshot,
+} from './ui.ts';
 import { t, setLanguage, getLanguage } from './i18n/index.ts';
 import { rareEvent } from './events.ts';
 import { AiClient } from './ai/client.ts';
+import { OneLevelUndo } from './undo.ts';
 import {
   generateMutter,
   generatePoem,
@@ -28,10 +37,11 @@ import {
 
 async function loadSave() {
   try {
-    const raw = await window.tsuminiwa.loadWorld();
-    return raw ? JSON.parse(raw) : null;
+    const result = await window.tsuminiwa.loadWorld();
+    if (!result.json) return { data: null, recovered: false, failed: result.failed };
+    return { data: JSON.parse(result.json), recovered: result.recovered, failed: false };
   } catch {
-    return null;
+    return { data: null, recovered: false, failed: true };
   }
 }
 
@@ -54,7 +64,8 @@ async function main() {
   let world: World;
   let savedCharacters: any = null;
 
-  const save = await loadSave();
+  const loaded = await loadSave();
+  const save = loaded.data;
   if (save && save.world) {
     try {
       world = World.deserialize(save.world);
@@ -64,6 +75,8 @@ async function main() {
       Object.assign(state.settings, save.settings || {});
       savedCharacters = save.characters;
     } catch {
+      loaded.failed = true;
+      loaded.recovered = false;
       world = generateWorld(state.gridSize, state.gridSize, state.maxHeight);
     }
   } else {
@@ -76,6 +89,7 @@ async function main() {
   }
   // 保存された言語を反映(以降の t() はこの言語で引かれる)
   setLanguage(state.settings.language);
+  restoreEventLog(save?.eventLog);
 
   // AI クライアント(後続のフレーバー機能が使う。無効/失敗時は null を返す)。
   // 実生成はメインプロセス(window.tsuminiwa.ai)へ委譲する
@@ -270,16 +284,31 @@ async function main() {
       dayTime: daynight.t,
       day: daynight.day,
       waterDist: waterSim.serialize(),
+      eventLog: eventLogSnapshot(),
+      weatherState: weather.state,
+      weatherTimer: weather.timer,
+      dayEvents: [...dayEvents],
     });
 
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  let saveFailureShown = false;
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => window.tsuminiwa.saveWorld(snapshot()), 1200);
+    saveTimer = setTimeout(async () => {
+      const ok = await window.tsuminiwa.saveWorld(snapshot());
+      if (!ok && !saveFailureShown) {
+        saveFailureShown = true;
+        showToast(t('save.writeFailed'));
+      }
+      if (ok) saveFailureShown = false;
+    }, 1200);
   }
 
+  // 描画済みのワールド版。再生成・Undoからも更新する
+  let renderedVersion = -1;
+
   // ---- UI ----
-  setupUI(
+  const ui = setupUI(
     {
       rotate: (steps: number) => view.rotate(steps),
       quit: () => {
@@ -319,30 +348,121 @@ async function main() {
         scheduleSave();
       },
       regenerate: (size: number, maxHeight: number) => rebuildWorld(size, maxHeight),
+      eventLogChanged: scheduleSave,
       // ことばで世界をつくる(#3): AI無効/失敗時は何もしない(従来の世界は保たれる)
       worldgen: async (instruction: string) => {
-        // キーが無いと「思い描いている…→失敗」が毎回チラつくので、先に確認する
-        if (!ai.available() || !(await window.tsuminiwa.ai.hasKey())) return;
+        if (!state.settings.aiEnabled) {
+          showToast(t('ai.needEnabled'));
+          return false;
+        }
+        if (!state.settings.aiConsent) {
+          showToast(t('ai.needConsent'));
+          return false;
+        }
+        if (!(await window.tsuminiwa.ai.hasKey())) {
+          showToast(t('ai.needKey'));
+          return false;
+        }
         showToast(t('ai.worldgenMaking'));
         const params = await generateWorldParams(ai, instruction, { lang: getLanguage() });
         if (params) {
           // AI が返した動的パラメータ。clampParams で全キーそろう前提で WorldGenParams として扱う
           rebuildWorld(state.gridSize, state.maxHeight, params as unknown as WorldGenParams);
-          showToast(t('ai.worldgenDone'));
+          return true;
         } else {
           showToast(t('ai.worldgenFail'));
+          return false;
         }
       },
     },
     state,
   );
 
-  // 描画済みのワールド版。rebuildWorld からも参照するのでここで宣言しておく
-  // (-1 で必ず初回 rebuild させる。季節色・氷が未反映のまま描かれないように)
-  let renderedVersion = -1;
+  if (loaded.recovered) showToast(t('save.recovered'));
+  else if (loaded.failed) showToast(t('save.failed'));
+  else if (!save) showToast(t('ui.welcome'));
 
-  // 世界を作り直す共通処理(手動リセット・ことばで世界生成の両方から)
+  const UNDO_DURATION = 10_000;
+  const undo = new OneLevelUndo<string>();
+  let undoExpiryTimer: ReturnType<typeof setTimeout> | undefined;
+  let dismissUndoToast: (() => void) | null = null;
+
+  function clearUndoOffer() {
+    clearTimeout(undoExpiryTimer);
+    dismissUndoToast?.();
+    dismissUndoToast = null;
+  }
+
+  function restoreSnapshot(raw: string) {
+    const data = JSON.parse(raw);
+    world = World.deserialize(data.world);
+    state.gridSize = world.cols;
+    state.maxHeight = world.maxHeight;
+    state.auto = Boolean(data.auto);
+    Object.assign(state.settings, DEFAULT_SETTINGS, data.settings || {});
+    setLanguage(state.settings.language);
+
+    daynight.t = typeof data.dayTime === 'number' ? data.dayTime : 0.1;
+    daynight.day = typeof data.day === 'number' ? data.day : 0;
+    dayEvents.splice(0, dayEvents.length, ...(Array.isArray(data.dayEvents) ? data.dayEvents : []));
+    restoreEventLog(data.eventLog);
+
+    view.setWorld(world);
+    characters.setWorld(world);
+    characters.deserialize(data.characters);
+    autopilot.setWorld(world);
+    autopilot.enabled = state.auto;
+    weather.setWorld(world);
+    if (['sunny', 'cloudy', 'rain', 'snow'].includes(data.weatherState)) {
+      weather.state = data.weatherState;
+    }
+    weather.timer = typeof data.weatherTimer === 'number' ? data.weatherTimer : 0;
+    setWeatherDisplay(weather.emoji, weather.state);
+    waterSim.setWorld(world);
+    waterSim.load(data.waterDist);
+    aging.setWorld(world);
+    critters.setWorld(world);
+    seasonal.setWorld(world);
+
+    view.setShadows(state.settings.shadows);
+    window.tsuminiwa.setPinned(state.settings.pinned);
+    window.tsuminiwa.setAutoLaunch(state.settings.autoLaunch);
+    characters.applyScale();
+    applySeason(false);
+    lastSeasonIndex = daynight.seasonIndex;
+    lastDay = daynight.day;
+    view.rebuild();
+    renderedVersion = world.version;
+    ui.syncFromState();
+  }
+
+  function undoRegeneration() {
+    const raw = undo.take();
+    if (!raw) return;
+    clearUndoOffer();
+    restoreSnapshot(raw);
+    showToast(t('world.restored'));
+    scheduleSave();
+  }
+
+  function offerUndo() {
+    clearUndoOffer();
+    dismissUndoToast = showActionToast(
+      t('world.regenerated'),
+      t('world.undo'),
+      undoRegeneration,
+      UNDO_DURATION,
+    );
+    undoExpiryTimer = setTimeout(() => {
+      undo.clear();
+      dismissUndoToast = null;
+    }, UNDO_DURATION);
+  }
+
+  // 世界を作り直す共通処理(サイズ変更・手動リセット・ことばで世界生成)。
+  // 連続変更時は毎回、直前の確定済み世界だけを一世代保持する。
   function rebuildWorld(size: number, maxHeight: number, params: WorldGenParams | null = null) {
+    undo.capture(snapshot());
     state.gridSize = size;
     state.maxHeight = maxHeight;
     world = generateWorld(size, size, maxHeight, params);
@@ -356,7 +476,10 @@ async function main() {
     seasonal.setWorld(world);
     spawnStarterCharacters(characters);
     applySeason(false);
-    renderedVersion = -1; // 新しい世界を必ず描き直す
+    view.rebuild();
+    renderedVersion = world.version;
+    ui.syncFromState();
+    offerUndo();
     scheduleSave();
   }
 

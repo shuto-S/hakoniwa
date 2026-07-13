@@ -34,6 +34,7 @@ npm install
 | `npm run typecheck` | `tsc --noEmit` で型を検査(esbuild は型を見ないので必須) |
 | `npm run lint` | ESLint(同名シャドウ・初期化前アクセスなどを検出) |
 | `npm test` | `node --test`(テストは Node ネイティブの型ストリップで `.ts` を直接読む。Node 24+) |
+| `npm run smoke:electron` | 一時 userData で Electron を起動し、主要UI・キーボード操作・パレットをスモーク確認 |
 | `npm run watch` | レンダラーバンドルの watch モード(別ターミナルで `npx electron .`) |
 | `npm run package` | macOS アプリ(`release/つみにわ-darwin-arm64/つみにわ.app`)を生成 |
 
@@ -76,6 +77,16 @@ ditto "release/つみにわ-darwin-arm64/つみにわ.app" "/Applications/つみ
 タグを push すると `.github/workflows/release.yml` が macOS ランナーでパッケージし、
 zip を Releases に自動添付する:
 
+次の GitHub Actions Secrets がすべて設定されている場合は Developer ID 署名・Apple 公証・
+staple まで自動で行う。未設定の場合は従来どおり署名なしでリリースする。
+
+- `APPLE_CERTIFICATE_P12`: Developer ID Application 証明書の `.p12` を base64 化した値
+- `APPLE_CERTIFICATE_PASSWORD`: `.p12` のパスワード
+- `APPLE_SIGNING_IDENTITY`: `Developer ID Application: ...` の完全な名前
+- `APPLE_ID`: 公証に使う Apple ID
+- `APPLE_APP_PASSWORD`: App用パスワード
+- `APPLE_TEAM_ID`: Apple Developer Team ID
+
 ```sh
 git tag v0.2.0
 git push --tags
@@ -85,16 +96,19 @@ git push --tags
 
 ### CI
 
-push / PR ごとに `.github/workflows/ci.yml` が `lint → typecheck → build → test` の通過を確認する。
+push / PR ごとに `.github/workflows/ci.yml` が `lint → typecheck → build → test → Electron UI smoke` の通過を確認する。
 
 ## セーブデータ
 
 - 場所: `~/Library/Application Support/tsuminiwa/world.json`
 - 開発版(`npm start`)とアプリ版で**同じファイルを共有**する
-- 世界・キャラクター・設定・日数・水の状態が入る。変更から1.2秒デバウンスで自動保存
+- 世界・キャラクター・設定・日数・水の状態・村のきろくが入る。変更から1.2秒デバウンスで自動保存
+- 一時ファイルから atomic に置き換え、直前の正常な世代を `world.backup.json` に保持する
+- サイズ変更・手動リセット・AI世界生成は再生成直前のセッションをメモリに一世代だけ保持し、
+  10秒間の「元にもどす」操作で復元する。連続再生成では直前の確定済み世界だけがUndo対象
 - リセットしたいとき: アプリ内の「世界をつくりなおす」、
   または終了した状態で `world.json` を削除
-- バックアップしたいとき: `world.json` をコピーしておくだけでよい
+- 手動バックアップしたいとき: `world.json` をコピーしておくだけでよい
 
 ## デモ映像(GIF + mp4)
 
@@ -154,8 +168,9 @@ node -e "require('fs').writeFileSync('path.txt','Electron.app/Contents/MacOS/Ele
 
 ### セーブが壊れて起動できない
 
-読み込み失敗時は自動で新しい世界を生成するフォールバックがあるが、
-念のため `world.json` を退避 → 削除して起動し直すと確実。
+`world.json` のJSONが壊れていれば `world.backup.json` から自動復元する。
+両方とも読み込めない場合は通知を出して新しい世界を生成するため、必要なら終了後に
+両ファイルを退避して内容を確認する。
 
 ## そのほか
 

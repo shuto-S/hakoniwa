@@ -64,7 +64,7 @@ npm start        # run directly
 npm run package  # build the .app (output in release/)
 ```
 
-Requires macOS + Node.js 20+.
+Requires macOS + Node.js 24+.
 
 ## 🎮 Controls
 
@@ -76,10 +76,15 @@ Requires macOS + Node.js 20+.
 | ⟲ / ⟳ | Rotate view by 60° |
 | 🌱 | Auto-develop mode |
 | 📷 | Take a screenshot, preview it, then save or share to X |
+| 📜 | Review recent events in the village log |
 | ⚙ | Settings |
 | Drag the top bar | Move the window |
 
 The UI fades away when the window loses focus, leaving just the world on your desktop.
+Grid-size, height, and AI world-generation changes apply immediately and can be undone for 10
+seconds using the on-screen Undo action.
+The world and village log are saved automatically. The last valid save is kept as a backup and
+restored automatically if corruption is detected. Window position and size are also restored.
 
 ## 🛠 Development
 

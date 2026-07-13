@@ -21,3 +21,5 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      - name: Electron UI smoke test
+        run: xvfb-run -a npx electron . --smoke-test --no-sandbox

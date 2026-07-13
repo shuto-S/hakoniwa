@@ -15,8 +15,35 @@ interface Callbacks {
   spawn(type: string): void;
   regenerate(gridSize: number, maxHeight: number): void;
   settingChanged(key: string, value: unknown): void;
-  worldgen?(instruction: string): void;
+  worldgen?(instruction: string): Promise<boolean>;
+  eventLogChanged?(): void;
   getRoster?(): Iterable<string>;
+}
+
+export interface EventLogEntry {
+  at: number;
+  text: string;
+}
+
+const MAX_EVENT_LOG = 100;
+let eventLog: EventLogEntry[] = [];
+let eventLogRenderer: (() => void) | null = null;
+let eventLogChanged: (() => void) | null = null;
+
+export function restoreEventLog(entries: unknown): void {
+  if (!Array.isArray(entries)) return;
+  eventLog = entries
+    .filter(
+      (entry): entry is EventLogEntry =>
+        Boolean(entry) &&
+        Number.isFinite((entry as EventLogEntry).at) &&
+        typeof (entry as EventLogEntry).text === 'string',
+    )
+    .slice(-MAX_EVENT_LOG);
+}
+
+export function eventLogSnapshot(): EventLogEntry[] {
+  return eventLog.map((entry) => ({ ...entry }));
 }
 
 interface State {
@@ -33,11 +60,26 @@ export function setupUI(callbacks: Callbacks, state: State) {
 
   // ---- パレット ----
   const palette = document.getElementById('palette') as HTMLElement;
-  const swatches = new Map<string, HTMLElement>();
+  const swatches = new Map<string, HTMLButtonElement>();
+
+  const refreshHint = () => {
+    const hint = document.getElementById('hint')!;
+    hint.textContent =
+      state.tool === 'none'
+        ? t('ui.hintView')
+        : state.tool === 'erase'
+          ? t('ui.hintErase')
+          : t('ui.hintPlace', { name: t(`block.${state.tool}`) });
+  };
 
   const select = (tool: string) => {
     state.tool = tool;
-    for (const [key, el] of swatches) el.classList.toggle('selected', key === tool);
+    for (const [key, el] of swatches) {
+      const selected = key === tool;
+      el.classList.toggle('selected', selected);
+      el.setAttribute('aria-pressed', String(selected));
+    }
+    refreshHint();
   };
 
   // パレットのツールチップは言語切替で引き直せるよう関数にまとめる
@@ -49,11 +91,13 @@ export function setupUI(callbacks: Callbacks, state: State) {
           : key === 'erase'
             ? t('tip.erase')
             : t('tip.place', { name: t(`block.${key}`) });
+      el.setAttribute('aria-label', el.dataset.tip);
     }
   };
 
   // いちばん左は「なにもしない(見るだけ)」モード
-  const none = document.createElement('div');
+  const none = document.createElement('button');
+  none.type = 'button';
   none.className = 'swatch';
   none.style.background = 'rgba(255,255,255,0.15)';
   none.textContent = '🖐';
@@ -62,7 +106,8 @@ export function setupUI(callbacks: Callbacks, state: State) {
   swatches.set('none', none);
 
   for (const [key, def] of Object.entries(BLOCK_TYPES)) {
-    const el = document.createElement('div');
+    const el = document.createElement('button');
+    el.type = 'button';
     el.className = 'swatch';
     el.style.background = `#${def.color.toString(16).padStart(6, '0')}`;
     el.addEventListener('click', () => select(key));
@@ -70,7 +115,8 @@ export function setupUI(callbacks: Callbacks, state: State) {
     swatches.set(key, el);
   }
 
-  const eraser = document.createElement('div');
+  const eraser = document.createElement('button');
+  eraser.type = 'button';
   eraser.className = 'swatch';
   eraser.style.background = 'rgba(255,255,255,0.15)';
   eraser.textContent = '⛏';
@@ -95,11 +141,13 @@ export function setupUI(callbacks: Callbacks, state: State) {
     shotModal.classList.add('hidden');
     shotPreview.src = '';
     currentShot = null;
+    document.getElementById('btn-shot')!.focus();
   };
   document.getElementById('btn-shot')!.addEventListener('click', () => {
     currentShot = callbacks.capture();
     shotPreview.src = currentShot;
     shotModal.classList.remove('hidden');
+    document.getElementById('shot-close')!.focus();
   });
   // 閉じるのは「とじる」ボタンだけ。保存・シェアしてもプレビューは開いたまま
   document.getElementById('shot-close')!.addEventListener('click', closeShot);
@@ -111,7 +159,10 @@ export function setupUI(callbacks: Callbacks, state: State) {
   });
 
   const autoButton = document.getElementById('btn-auto') as HTMLElement;
-  const syncAutoButton = () => autoButton.classList.toggle('active', state.auto);
+  const syncAutoButton = () => {
+    autoButton.classList.toggle('active', state.auto);
+    autoButton.setAttribute('aria-pressed', String(state.auto));
+  };
   autoButton.addEventListener('click', () => {
     state.auto = !state.auto;
     syncAutoButton();
@@ -136,21 +187,67 @@ export function setupUI(callbacks: Callbacks, state: State) {
   const tabs = [...panel.querySelectorAll<HTMLElement>('#settings-tabs .tab')];
   const panes = [...panel.querySelectorAll<HTMLElement>('.tab-pane')];
   const showTab = (name: string | undefined) => {
-    for (const tab of tabs) tab.classList.toggle('active', tab.dataset.tab === name);
-    for (const pane of panes) pane.classList.toggle('active', pane.dataset.pane === name);
+    for (const tab of tabs) {
+      const active = tab.dataset.tab === name;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', String(active));
+      tab.tabIndex = active ? 0 : -1;
+    }
+    for (const pane of panes) {
+      const active = pane.dataset.pane === name;
+      pane.classList.toggle('active', active);
+      pane.hidden = !active;
+    }
     if (name === 'villagers') renderRoster(); // 「なかま」タブは開くたびに作り直す
   };
   for (const tab of tabs) tab.addEventListener('click', () => showTab(tab.dataset.tab));
+  document.getElementById('settings-tabs')!.addEventListener('keydown', (event) => {
+    if (!(event instanceof KeyboardEvent) || !['ArrowLeft', 'ArrowRight'].includes(event.key))
+      return;
+    event.preventDefault();
+    const current = tabs.indexOf(document.activeElement as HTMLElement);
+    const direction = event.key === 'ArrowRight' ? 1 : -1;
+    const next = tabs[(current + direction + tabs.length) % tabs.length];
+    showTab(next.dataset.tab);
+    next.focus();
+  });
 
-  const closeSettings = () => panel.classList.add('hidden');
+  const closeSettings = () => {
+    panel.classList.add('hidden');
+    document.getElementById('btn-settings')!.focus();
+  };
   document.getElementById('btn-settings')!.addEventListener('click', () => {
     const opening = panel.classList.contains('hidden');
     panel.classList.toggle('hidden');
-    if (opening) showTab('villagers'); // 開いたら「なかま」を先頭に
+    if (opening) {
+      showTab('villagers'); // 開いたら「なかま」を先頭に
+      tabs[0].focus();
+    }
   });
   document.getElementById('settings-close')!.addEventListener('click', closeSettings);
   panel.addEventListener('click', (event) => {
     if (event.target === panel) closeSettings(); // 背景クリックで閉じる
+  });
+
+  setupEventLog(callbacks);
+
+  window.addEventListener('keydown', (event) => {
+    const logPanel = document.getElementById('log-panel')!;
+    if (event.key === 'Tab') {
+      const activeModal = [shotModal, panel, logPanel].find(
+        (modal) => !modal.classList.contains('hidden'),
+      );
+      if (activeModal) trapFocus(activeModal, event);
+      return;
+    }
+    if (event.key === 'Escape') {
+      if (!shotModal.classList.contains('hidden')) closeShot();
+      else if (!panel.classList.contains('hidden')) closeSettings();
+      else if (!logPanel.classList.contains('hidden')) {
+        logPanel.classList.add('hidden');
+        document.getElementById('btn-log')!.focus();
+      }
+    }
   });
 
   const gridSize = document.getElementById('grid-size') as HTMLInputElement;
@@ -178,13 +275,18 @@ export function setupUI(callbacks: Callbacks, state: State) {
 
   // ---- ゲーム設定(その場で反映) ----
   const sliderRefreshers: (() => void)[] = []; // 言語切替で単位表示を引き直すため
+  const settingControlSyncers: (() => void)[] = [];
   const bindSlider = (id: string, key: keyof Settings, format: (v: number) => string) => {
     const input = document.getElementById(id) as HTMLInputElement;
     const value = document.getElementById(`${id}-value`) as HTMLElement;
-    input.value = state.settings[key] as string;
     const render = () => (value.textContent = format(Number(input.value)));
-    render();
+    const sync = () => {
+      input.value = String(state.settings[key]);
+      render();
+    };
+    sync();
     sliderRefreshers.push(render);
+    settingControlSyncers.push(sync);
     input.addEventListener('input', () => {
       render();
       callbacks.settingChanged(key, Number(input.value));
@@ -201,7 +303,14 @@ export function setupUI(callbacks: Callbacks, state: State) {
 
   const bindCheckbox = (id: string, key: keyof Settings) => {
     const input = document.getElementById(id) as HTMLInputElement;
-    input.checked = state.settings[key] as boolean;
+    const text = input.closest('.row')?.querySelector('span');
+    if (text) {
+      text.id ||= `${id}-label`;
+      input.setAttribute('aria-labelledby', text.id);
+    }
+    const sync = () => (input.checked = state.settings[key] as boolean);
+    sync();
+    settingControlSyncers.push(sync);
     input.addEventListener('change', () => callbacks.settingChanged(key, input.checked));
   };
   bindCheckbox('opt-weather', 'weather');
@@ -229,8 +338,10 @@ export function setupUI(callbacks: Callbacks, state: State) {
     setLanguage(langSelect.value);
     applyDomTranslations(); // 静的なテキスト・ツールチップ
     refreshPaletteTips();
+    refreshHint();
     for (const r of sliderRefreshers) r();
     for (const r of langRefreshers) r();
+    eventLogRenderer?.();
     if (!panel.classList.contains('hidden')) renderRoster();
     callbacks.settingChanged('language', langSelect.value); // 天気・季節の引き直し+保存
   });
@@ -246,9 +357,95 @@ export function setupUI(callbacks: Callbacks, state: State) {
     callbacks.regenerate(Number(gridSize.value), Number(maxHeight.value));
   });
 
-  setupAiSettings(callbacks, state);
+  const syncAiSettings = setupAiSettings(callbacks, state);
   setupTooltips();
   setupAutoHide();
+
+  return {
+    syncFromState: () => {
+      gridSize.value = String(state.gridSize);
+      maxHeight.value = String(state.maxHeight);
+      gridSizeValue.textContent = t('unit.grid', { v: state.gridSize });
+      maxHeightValue.textContent = String(state.maxHeight);
+      for (const sync of settingControlSyncers) sync();
+      langSelect.value = state.settings.language;
+      setLanguage(state.settings.language);
+      applyDomTranslations();
+      refreshPaletteTips();
+      refreshHint();
+      for (const refresh of sliderRefreshers) refresh();
+      syncAutoButton();
+      syncAiSettings();
+      renderRoster();
+      eventLogRenderer?.();
+    },
+  };
+}
+
+function trapFocus(container: HTMLElement, event: KeyboardEvent) {
+  const focusable = [
+    ...container.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((element) => element.getClientRects().length > 0);
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+function setupEventLog(callbacks: Callbacks) {
+  const panel = document.getElementById('log-panel') as HTMLElement;
+  const list = document.getElementById('event-log') as HTMLElement;
+  const render = () => {
+    list.textContent = '';
+    if (eventLog.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'note';
+      empty.textContent = t('log.empty');
+      list.appendChild(empty);
+      return;
+    }
+    for (const entry of [...eventLog].reverse()) {
+      const row = document.createElement('div');
+      row.className = 'event-log-entry';
+      const time = document.createElement('span');
+      time.className = 'event-log-time';
+      const date = new Date(entry.at);
+      time.textContent = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+      const text = document.createElement('span');
+      text.textContent = entry.text;
+      row.append(time, text);
+      list.appendChild(row);
+    }
+  };
+  eventLogRenderer = render;
+  eventLogChanged = callbacks.eventLogChanged ?? null;
+
+  const close = () => {
+    panel.classList.add('hidden');
+    document.getElementById('btn-log')!.focus();
+  };
+  document.getElementById('btn-log')!.addEventListener('click', () => {
+    render();
+    panel.classList.remove('hidden');
+    document.getElementById('log-close')!.focus();
+  });
+  document.getElementById('log-close')!.addEventListener('click', close);
+  panel.addEventListener('click', (event) => {
+    if (event.target === panel) close();
+  });
+  document.getElementById('log-clear')!.addEventListener('click', () => {
+    eventLog = [];
+    render();
+    eventLogChanged?.();
+  });
 }
 
 // ---- AI(Gemini)設定の配線 ----
@@ -296,12 +493,15 @@ function setupAiSettings(callbacks: Callbacks, state: State) {
 
   const syncVisibility = () => aiConfig.classList.toggle('hidden', !enabled.checked);
 
-  enabled.checked = s.aiEnabled;
-  authSel.value = s.aiAuthMode;
-  modelSel.value = s.aiModel;
-  consent.checked = s.aiConsent;
-  syncVisibility();
-  refreshKeyStatus();
+  const sync = () => {
+    enabled.checked = s.aiEnabled;
+    authSel.value = s.aiAuthMode;
+    modelSel.value = s.aiModel;
+    consent.checked = s.aiConsent;
+    syncVisibility();
+    void refreshKeyStatus();
+  };
+  sync();
 
   enabled.addEventListener('change', () => {
     syncVisibility();
@@ -335,16 +535,24 @@ function setupAiSettings(callbacks: Callbacks, state: State) {
 
   // ことばで世界をつくる(#3)
   const wgInput = document.getElementById('ai-worldgen-input') as HTMLInputElement;
-  const runWorldgen = () => {
+  const worldgenButton = document.getElementById('ai-worldgen-go') as HTMLButtonElement;
+  const runWorldgen = async () => {
     const instruction = wgInput.value.trim();
     if (!instruction || !callbacks.worldgen) return;
-    wgInput.value = '';
-    callbacks.worldgen(instruction);
+    worldgenButton.disabled = true;
+    worldgenButton.setAttribute('aria-busy', 'true');
+    try {
+      if (await callbacks.worldgen(instruction)) wgInput.value = '';
+    } finally {
+      worldgenButton.disabled = false;
+      worldgenButton.removeAttribute('aria-busy');
+    }
   };
-  document.getElementById('ai-worldgen-go')!.addEventListener('click', runWorldgen);
+  worldgenButton.addEventListener('click', runWorldgen);
   wgInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') runWorldgen();
+    if (e.key === 'Enter') void runWorldgen();
   });
+  return sync;
 }
 
 // フォーカスが外れてしばらくしたらUIをフェードアウトする(箱庭だけ残る)
@@ -364,6 +572,10 @@ function setupAutoHide() {
 
 // できごとを画面のすみにふわっと出す
 export function showToast(text: string) {
+  eventLog.push({ at: Date.now(), text });
+  if (eventLog.length > MAX_EVENT_LOG) eventLog.splice(0, eventLog.length - MAX_EVENT_LOG);
+  eventLogRenderer?.();
+  eventLogChanged?.();
   let container = document.getElementById('toasts');
   if (!container) {
     container = document.createElement('div');
@@ -374,9 +586,61 @@ export function showToast(text: string) {
   toast.className = 'toast';
   toast.textContent = text;
   container.appendChild(toast);
-  while (container.children.length > 3) container.firstChild!.remove();
+  trimToasts(container);
   setTimeout(() => toast.classList.add('fade'), 3200);
   setTimeout(() => toast.remove(), 4000);
+}
+
+// 一定時間だけ操作ボタンを添える通知。操作UIは村のきろくへ保存しない。
+export function showActionToast(
+  text: string,
+  actionLabel: string,
+  action: () => void,
+  duration = 10_000,
+): () => void {
+  let container = document.getElementById('toasts');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toasts';
+    document.getElementById('app')!.appendChild(container);
+  }
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-action';
+  const message = document.createElement('span');
+  message.textContent = text;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = actionLabel;
+  toast.append(message, button);
+  container.appendChild(toast);
+  trimToasts(container);
+
+  let removed = false;
+  let fadeTimer: ReturnType<typeof setTimeout>;
+  let removeTimer: ReturnType<typeof setTimeout>;
+  const dismiss = () => {
+    if (removed) return;
+    removed = true;
+    clearTimeout(fadeTimer);
+    clearTimeout(removeTimer);
+    toast.remove();
+  };
+  fadeTimer = setTimeout(() => toast.classList.add('fade'), Math.max(0, duration - 800));
+  removeTimer = setTimeout(dismiss, duration);
+  button.addEventListener('click', () => {
+    dismiss();
+    action();
+  });
+  return dismiss;
+}
+
+function trimToasts(container: HTMLElement) {
+  while (container.children.length > 3) {
+    const removable = [...container.children].find(
+      (child) => !child.classList.contains('toast-action'),
+    );
+    (removable || container.firstChild)!.remove();
+  }
 }
 
 // トップバーの天気表示を更新(state は 'sunny' などのキー)
@@ -384,6 +648,7 @@ export function setWeatherDisplay(emoji: string, state: string) {
   const el = document.getElementById('weather') as HTMLElement;
   el.textContent = emoji;
   el.dataset.tip = t('tip.weather', { label: t(`weather.${state}`) });
+  el.setAttribute('aria-label', el.dataset.tip);
 }
 
 // トップバーの季節・日数表示を更新
@@ -392,6 +657,7 @@ export function setSeasonDisplay(season: { key: string; emoji: string }, day: nu
   const name = t(`season.${season.key}`);
   el.textContent = `${season.emoji}${t('unit.day', { v: day + 1 })}`;
   el.dataset.tip = t('tip.season', { name, day: day + 1 });
+  el.setAttribute('aria-label', el.dataset.tip);
 }
 
 // data-i18n-title / 動的な dataset.tip をマウスオーバーで出すツールチップにする

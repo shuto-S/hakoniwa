@@ -56,6 +56,11 @@ export function applyDomTranslations(root: ParentNode = document) {
     el.textContent = t(el.dataset.i18n as string);
   }
   for (const el of root.querySelectorAll<HTMLElement>('[data-i18n-title]')) {
-    el.dataset.tip = t(el.dataset.i18nTitle as string);
+    const label = t(el.dataset.i18nTitle as string);
+    el.dataset.tip = label;
+    el.setAttribute('aria-label', label);
+  }
+  for (const el of root.querySelectorAll<HTMLInputElement>('[data-i18n-placeholder]')) {
+    el.placeholder = t(el.dataset.i18nPlaceholder as string);
   }
 }

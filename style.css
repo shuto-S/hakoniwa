@@ -57,14 +57,27 @@ button {
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 13px;
-  width: 26px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
   line-height: 1;
 }
 
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 button:hover {
   background: rgba(255, 255, 255, 0.28);
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.55;
 }
 
 button.active {
@@ -90,18 +103,25 @@ button.active {
 #palette {
   flex: none;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-  gap: 6px;
-  padding: 7px 10px;
+  gap: 4px;
+  padding: 7px 8px;
   background: rgba(28, 30, 38, 0.7);
   border-radius: 12px;
   margin: 0 6px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+#palette::-webkit-scrollbar {
+  display: none;
 }
 
 .swatch {
-  width: 24px;
-  height: 26px;
+  width: 28px;
+  min-width: 28px;
+  height: 30px;
   cursor: pointer;
   clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
   opacity: 0.75;
@@ -112,6 +132,8 @@ button.active {
   align-items: center;
   justify-content: center;
   font-size: 13px;
+  border-radius: 0;
+  padding: 0;
 }
 
 .swatch:hover {
@@ -170,6 +192,21 @@ button.active {
   opacity: 0;
 }
 
+.toast-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.toast-action button {
+  width: auto;
+  height: 26px;
+  padding: 0 9px;
+  white-space: nowrap;
+  background: rgba(120, 220, 130, 0.45);
+}
+
 /* ---- スクショのプレビュー ---- */
 #shot-modal {
   position: absolute;
@@ -183,6 +220,85 @@ button.active {
      まったく描画されないことがある(Chromiumのバグ)。
      transform で独自の合成レイヤーに昇格させると正しく描画される。消さないこと */
   transform: translateZ(0);
+}
+
+#log-panel {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+  transform: translateZ(0);
+}
+
+#log-panel.hidden {
+  display: none;
+}
+
+#log-card {
+  width: 360px;
+  max-width: calc(100% - 32px);
+  max-height: calc(100% - 40px);
+  padding: 14px;
+  background: rgba(28, 30, 38, 0.96);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-head h2 {
+  font-size: 14px;
+}
+
+#event-log {
+  min-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.event-log-entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  line-height: 1.4;
+}
+
+.event-log-time {
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
+}
+
+#log-clear {
+  width: auto;
+  padding: 6px 12px;
+  align-self: flex-end;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 #shot-modal.hidden {
@@ -308,10 +424,50 @@ body.chrome-hidden #tooltip {
 }
 
 #settings-close {
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.08);
+}
+
+@media (min-width: 540px) {
+  #palette {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 400px) {
+  #title {
+    display: none;
+  }
+
+  #topbar {
+    gap: 4px;
+    padding-inline: 6px;
+  }
+
+  #topbar-buttons {
+    gap: 2px;
+  }
+
+  #topbar-buttons button {
+    width: 28px;
+  }
+
+  #season {
+    font-size: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 #settings-close:hover {
